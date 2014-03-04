@@ -1,0 +1,193 @@
+
+% ----------------------------------------------------------------------
+%                   LATEX TEMPLATE FOR PhD THESIS
+% ----------------------------------------------------------------------
+
+% based on Harish Bhanderi's PhD/MPhil template, then Uni Cambridge
+% http://www-h.eng.cam.ac.uk/help/tpl/textprocessing/ThesisStyle/
+% corrected and extended in 2007 by Jakob Suckale, then MPI-CBG PhD programme
+% and made available through OpenWetWare.org - the free biology wiki
+   
+ 
+%: Style file for Latex
+% Most style definitions are in the external file PhDthesisPSnPDF.
+% In this template package, it can be found in ./Latex/Classes/
+\documentclass[oneside,11pt]{Latex/Classes/PhDthesisPSnPDF}
+  
+
+%: Macro file for Latex
+% Macros help you summarise frequently repeated Latex commands.
+% Here, they are placed in an external file /Latex/Macros/MacroFile1.tex
+% An macro that you may use frequently is the figuremacro (see introduction.tex)
+\include{Latex/Macros/MacroFile1}
+
+\usepackage[normal]{subfigure}
+\usepackage[left=3cm, bottom=3cm]{geometry} 
+%: ----------------------------------------------------------------------
+%:                  TITLE PAGE: 
+% ----------------------------------------------------------------------
+% below is to generate the title page with crest and author name
+
+%if output to PDF then put the following in PDF header
+\ifpdf  
+    \pdfinfo { /Title  (Indico: Behind the Scenes of CERN events)
+               /Creator (TeX)
+               /Producer (pdfTeX)
+               /Author (Ferhat Elmas ferhat.elmas@epfl.ch)
+               /CreationDate (D:20140314)  %format D:YYYYMMDDhhmmss
+               /ModDate (D:20140314)
+               /Subject (xyz)
+               /Keywords (SQL, NoSQL, Python, JavaScript, Web Development, GNU/GPL, Scalability) }
+    \pdfcatalog { /PageMode (/UseOutlines)
+                  /OpenAction (fitbh)  }
+\fi
+
+
+\title{Indico: Behind the Scenes of CERN events}
+
+ 
+% ----------------------------------------------------------------------
+% The section below defines www links/email for author and institutions
+% They will appear on the title page of the PDF and can be clicked
+\ifpdf
+  \author{\href{mailto:ferhat.elmas@epfl.ch}{\textbf{Ferhat Elmas}}\\ 
+  \href{mailto:pedro.ferreira@cern.ch}{CERN Supervisor: \textbf{Pedro Macedo Alves Ferreira}}  \\
+  \href{mailto:karl.aberer@epfl.ch}{EPFL Supervisor: \textbf{Karl Aberer}}  \\
+  }
+  \collegeordept{\href{http://ic.epfl.ch}{School of Computer and Communication Science}} 
+  \university{\href{http://www.epfl.ch}{EPFL}}
+  \crest{\includegraphics[width=4cm]{EPFL.png}} 
+  
+% If you are not creating a PDF then use the following. The default is PDF.
+\else
+  \author{Ferhat Elmas}
+  \cityofbirth{Supervised by: Pedro Macedo Alves Ferreira \and Karl Aberer}
+  \collegeordept{School of Computer and Communication Science}
+  \university{EPFL}
+  \crest{\includegraphics[width=4cm]{epfl.png}}
+\fi   
+  
+\renewcommand{\submittedtext}{Master Project Report}  
+\degree{Distributed Information Systems Laboratory}
+\degreedate{14 Mar 2014}
+
+
+% ----------------------------------------------------------------------
+       
+% turn of those nasty overfull and underfull hboxes
+\hbadness=10000
+\hfuzz=50pt
+
+
+%: --------------------------------------------------------------
+%:                  FRONT MATTER: dedications, abstract,..
+% --------------------------------------------------------------
+\bibpunct{[}{]}{,}{n}{,}{,}
+
+\begin{document}
+
+%\language{english}
+
+% sets line spacing
+\renewcommand\baselinestretch{1.0}
+\baselineskip=14pt plus0.5pt
+ 
+%: ----------------------- generate cover page ------------------------
+
+\maketitle  % command to print the title page with above variables
+
+
+%: ----------------------- abstract ------------------------
+
+% Your institution may have specific regulations if you need an abstract and where it is to be placed in the document. The default here is just after title.
+
+\include{frontmatter/abstract}
+
+% The original template provides and abstractseparate environment, if your institution requires them to be separate. I think it's easier to print the abstract from the complete report by restricting printing to the relevant page.
+% \begin{abstractseparate}
+%    \input{Abstract/abstract}
+% \end{abstractseparate}
+
+\frontmatter
+
+%: ----------------------- contents ------------------------
+
+\setcounter{secnumdepth}{3} % organisational level that receives a numbers
+\setcounter{tocdepth}{3}    % print table of contents for level 3
+\tableofcontents            % print the table of contents
+% levels are: 0 - chapter, 1 - section, 2 - subsection, 3 - subsection
+
+%: --------------------------------------------------------------
+%:                  MAIN DOCUMENT SECTION
+% --------------------------------------------------------------
+
+% the main text starts here with the introduction, 1st section,...
+\mainmatter
+
+\renewcommand{\chaptername}{} % do not change
+
+
+%: ----------------------- subdocuments ------------------------
+
+% Parts of the report are included below. Rename the files as required.
+% But take care that the paths match. You can also change the order of appearance by moving the include commands.
+
+\include{1/section1}	  
+\include{2/section2}					
+%\include{3/section3}  % you can add as many sections as you wish		
+
+
+% --------------------------------------------------------------
+%:                  BACK MATTER: appendices, refs,..
+% --------------------------------------------------------------
+
+% the back matter: appendix and references close the thesis
+
+
+%: ----------------------- bibliography ------------------------
+
+% The section below defines how references are listed and formatted
+% The default below is 2 columns, small font, complete author names.
+% Entries are also linked back to the page number in the text and to external URL if provided in the BibTex file.
+
+% PhDbiblio-url2 = names small caps, title bold & hyperlinked, link to page 
+%\begin{multicols}{2} % \begin{multicols}{ # columns}[ header text][ space]
+\begin{tiny} % tiny(5) < scriptsize(7) < footnotesize(8) < small (9)
+
+\bibliographystyle{Latex/Classes/PhDbiblio-url2} % Title is link if provided
+\renewcommand{\bibname}{References} % changes the header; default: Bibliography
+   
+\bibliography{backmatter/references} % adjust this to fit your BibTex file
+
+\end{tiny}
+%\end{multicols}  
+
+% --------------------------------------------------------------
+% Various bibliography styles exit. Replace above style as desired.
+
+% in-text refs: (1) (1; 2)
+% ref list: alphabetical; author(s) in small caps; initials last name; page(s)
+%\bibliographystyle{Latex/Classes/PhDbiblio-case} % title forced lower case
+%\bibliographystyle{Latex/Classes/PhDbiblio-bold} % title as in bibtex but bold
+%\bibliographystyle{Latex/Classes/PhDbiblio-url} % bold + www link if provided
+
+%\bibliographystyle{Latex/Classes/jmb} % calls style file jmb.bst
+% in-text refs: author (year) without brackets
+% ref list: alphabetical; author(s) in normal font; last name, initials; page(s)
+
+%\bibliographystyle{plainnat} % calls style file plainnat.bst
+% in-text refs: author (year) without brackets
+% (this works with package natbib)
+
+
+% --------------------------------------------------------------
+
+% according to Dresden med fac summary has to be at the end
+%\include{0_frontmatter/abstract}
+
+%: Declaration of originality
+%\include{9_backmatter/declaration}
+
+
+
+\end{document}
