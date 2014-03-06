@@ -337,19 +337,17 @@ In RDBMS, fully normalization is recommended to prevent update anomalies. In Cas
 
 \subsection{HBase}
 
-Apache HBase is open source clone of Google's BigTable. It's fault tolerant column oriented database with compression and versioning. HBase is a CP system from CAP Theorem.
+Apache HBase is open source clone of Google's BigTable. It's fault tolerant column oriented database with compression and version control for data. HBase is a CP system according to CAP Theorem.
 
-Records are accessed, sorted and distributed by row key. A master node keeps tracks of assignments to slaves, region servers because records are sorted and an assignment is a continuous range so clients can easily learn where to look for data by knowing lower and upper bounds.
+Records are accessed, sorted and distributed by row key. A master node keeps tracks of assignments to slaves, \textit{region} servers because records are sorted and an assignment is a continuous range so clients can easily learn where to look for data by knowing lower and upper bounds of regions.
 
-System is scalable since master node isn't involved with data requests but reassignments and table operations require master to be available. Thus, if master is down, data can be served by region servers because clients cache the boundaries of region servers. However, a cold client can't learn assignments because assignments are kept in meta table of master which isn't available.
+It's easily thought that HBase isn't scalable due to the existence of a master node. On the contrary, system is actually scalable because master node isn't involved with data requests. On the other hand, reassignments of regions according to size (split or combine) and table operations require master to be available. Thus, if master is down, data can be served by region servers because clients (can) cache the boundaries of region servers. However, a cold client can't learn assignments because assignments are kept in meta table stored in master which isn't up now.
 
-HBase runs on top of Hadoop Distributed File System. This requires costlier setup and configuration but replication comes free with HDFS.
+HBase runs on top of Hadoop Distributed File System (HDFS). Adaptation phase of HBase becomes more complex due to HDFS setup and configuration but when it's there, replication of data comes free with HDFS. HBase is designed to crunch very very big data, peta-bytes of data. That's why HDFS requirement seems reasonable but  if we think about Indico, HBase is much more complex solution than enough. It's basically killing a mosquito with an atom bomb. It's in production in data-rich parts of high load systems such as Facebook, Twitter and Yahoo. 
+% Double check me !!!!!!
+Google has its own version, BigTable and it was very successful to be universal back-end at Google. Google is working on the next generation of BigTable called Spanner which is storage engine of Drive, GMail, Groups and Maps.
 
-HBase is for really big data so without having Petabytes of data, it's probably not needed.
-
-HBase doesn't support transactions but atomic operations are supported in the row level so same ACID-like guarantees in relational databases with references across tables can be achieved by denormalization of data. If access patterns are known beforehand, HBase makes sense to nest entities. Otherwise, ad-hoc query support of RDBMSs is wanted. HBase solves transaction problem in the design phase with well-planned row key.
-
-HBase is production in high load systems such as Facebook, Meetup, Twitter and Yahoo.
+HBase doesn't support transactions but atomic operations are supported in the row level. ACID like guarantees provided by relational databases is achievable via de-normalization. However, nesting data requires more or less to know access patterns. Otherwise, ad-hoc queries would be a necessary but they aren't possible to lack of transactions. Transaction problem is solved in the design phase with well-planned row key and nesting data into one row.
 
 \begin{table}[!ht]
   \centering
@@ -359,12 +357,36 @@ HBase is production in high load systems such as Facebook, Meetup, Twitter and Y
 	\hline
     \textbf{Criteria} & \textbf{Feature} \\
 	\hline
-    Availability & HBase may be the biggest kahuna of the systems that can handle massive data. HBase is also a top level project of Apache Software Foundation and it's a part of Hadoop ecosystem so runs n top of HDFS(Hadoop Distributed File System). \\ \hline
-    Scalability & It follows the design of Google's BigTable and highly scalable. Like TaskTracker and JobTracker in Hadoop, or NameNode and DataNode in HDFS, HBase also has a master and slaves. Master makes administrative operations for auto-sharding and making assignments for slaves, region servers. This mapping is stored in META table at ZooKeeper node. Client need to know where each region is stored but they don't need to talk to master every time when they need data, instead clients can keep a cache and can directly connect to slaves. If there is a reassignment in regions, clients will get an exception to invalidate cache and will be required to relearn region assignment. Therefore, even if it seems it doesn't scale linearly due to a master-slave architecture, it is actually scales because master is only there to coordinate and master doesn't involve in data requests. However, there are some availability concerns related to master. If master is down, administrative operations can't be accomplished such as table creation/update but slaves can continue serving data operations even if master is down. \\ \hline
-    Ease of Use Development & Since it's a part of Hadoop, it requires Hadoop machinery in place. Setup process of HBase is the most involving of all candidates. However, if the system is installed, it can easily handle petabytes of data and provides a giant table view of data to clients irrespective of where data is stored. \\ \hline
-    Transactions Consistency & HBase isn't an ACID compliant database but it provides some of properties such as atomic mutation in the row level even if mutation includes multiple column families but that isn't enough in the context of Indico. \\ \hline
-    Community Momentum & HBase is a successful product and has a lot of well-known users but migrations seem to be cumbersome. That's why users that don't really have (really) big data problems in the scale of HBase (tens of petabytes) are going away from HBase in the favor of simpler solutions. \\ \hline
-    Cost \\ Exit Strategy &  Entering and exiting from HBase are costly because it lives within Hadoop ecosystem so there is no direct replacement. \\ \hline
+    Availability &
+    HBase may be the biggest kahuna of the systems that can handle massive data.
+    HBase is also a top level project of Apache Software Foundation, licensed under Apache License 2.0 and it's a part of Hadoop ecosystem so runs on top of HDFS.
+    \\ \hline
+    Scalability &
+    It follows the design of Google's BigTable and highly scalable.
+    Like TaskTracker and JobTracker in Hadoop, or NameNode and DataNode in HDFS, HBase also has a master and slaves.
+    Master handles administrative operations for auto-sharding and making assignments for slaves, region servers.
+    This mapping is stored in META table at ZooKeeper node.
+    Client need to know where each region is stored but they don't need to talk to master every time when they need data, instead clients can keep a cache and can directly connect to slaves.
+    If there is a reassignment in regions, clients will get an exception to invalidate cache and will be required to relearn region assignment.
+    Therefore, even if it seems it doesn't scale linearly due to a master-slave architecture, it is actually scales because master is only there to coordinate and master doesn't involve in data requests.
+    However, there are some availability concerns related to master.
+    If master is down, administrative operations can't be accomplished such as table creation/update but slaves can continue serving data operations even if master is down.
+    \\ \hline
+    Ease of Use Development &
+    Since it's a part of Hadoop, it requires Hadoop machinery in place.
+    Setup process of HBase is the most involving of all candidates.
+    However, if the system is installed, it can easily handle peta-bytes of data and provides a giant table view of data to clients irrespective of where data is stored.
+    \\ \hline
+    Transactions Consistency &
+    HBase isn't an ACID compliant database but it provides some of properties such as atomic mutation in the row level even if mutation includes multiple column families but that isn't enough in the context of Indico because Indico has a pretty complex schema and whole schema can't be nested so that one magic row key will enable atomic operations.
+    \\ \hline
+    Community Momentum &
+    HBase is a successful product and has a lot of well-known users but migrations seem to be cumbersome.
+    That's why users that don't really have (really) big data problems in the scale of HBase (tens of peta-bytes) are going away from HBase in the favor of simpler solutions.
+    \\ \hline
+    Cost \\ Exit Strategy &
+    Entering and exiting from HBase are costly because it lives within Hadoop ecosystem and there is no direct replacement as powerful as HBase for very big data.
+    \\ \hline
     Score & \rpt[2]{\FiveStarOpen}\rpt[4]{\FiveStar} \\
     \hline
   \end{tabular}
@@ -373,11 +395,16 @@ HBase is production in high load systems such as Facebook, Meetup, Twitter and Y
 
 \section{Document Oriented Databases}
 
-Document-oriented databases are middle comprimise between key-value store and RDBMS. Key-value stores identify records by a key and values aren't interpreted, seen as a blob of bytes, instead. On the other hand RDBMS requires a strict schema for even values. Document databases try to provide benefits of both worlds because they don't have a strict schema and can also give a meaning to the values so they can index and query by values.
+Document-oriented databases are middle compromise between key-value store and RDBMS.
+Key-value stores identify records by a key and values aren't interpreted, only seen as a blob of bytes, instead.
+On the other hand RDBMS requires a strict schema even for values (columns in relational terminology).
+Document databases try to provide benefits of both worlds because they don't have a strict schema for values and can also give a meaning to the values so that they can index and query by values.
 
 \subsection{MongoDB}
 
-MongoDB is a document-oriented database. It stores malleable JSON-style documents and provides a set of functionalities that is closer to that of RDBMS, namely a full-fledged query interface, full indexing support and in-place updates. The schema of a MongoDB is basically non-existent - there is the concept of "collections" that can be compared to relational tables, but objects can have whatever fields and values the programmer sees fit. An object is not constrained in any way just because it belongs to a particular collection.
+MongoDB is the most popular document-oriented database.
+It stores flexible JSON-style documents and provides a set of functionalities that is closer to that of RDBMS, namely a full-fledged query interface, full indexing support and in-place updates.
+The schema of a MongoDB is basically non-existent - there is the concept of \textit{collections} that can be compared to relational tables, but objects can have whatever fields and values the programmer sees fit. An object is not constrained in any way just because it belongs to a particular collection.
 
 \begin{table}[!ht]
   \centering
@@ -387,12 +414,28 @@ MongoDB is a document-oriented database. It stores malleable JSON-style document
 	\hline
     \textbf{Criteria} & \textbf{Feature} \\
 	\hline
-    Availability & MongoDB is highly popular and there is no problem related to license. \\ \hline
-    Scalability & Replication and sharding comes at default which are cornerstones of a scalable system. MongoDB supports master-slave replication via replica sets to provide redundancy and higher availability. Auto-sharding is possible with configuration servers, shard metadata holders, and query routers, mongos. Moreover, it is faster compared to competitors since it loosened some constraints. However, these weak guarantees can bite the application if application is very strict about data lost/consistency even under high load. MongoDB applies exclusive read-write lock so multiple reads can happen at the same time but a write requires a lock. There were problems related to the extent of write lock like being for whole mongod instance but it is recently improved to be for a collection. \\ \hline
-    Ease of Use Development & Python is one of the officially supported languages. MongoDB doesn't have a schema at all and very flexible, as a result, using MongoDB is a pleasure and developing in MongoDB takes less time. \\ \hline
-    Transactions Consistency & MongoDB gives guarantee of BASE, eventual consistency so it doesn't support transactions which is a really bad disadvantage for Indico where there are multiple inter-relations between entities. \\ \hline
-    Community Momentum & Without any doubt, MongoDB is the most popular NoSQL database in the wild and it is very well documented. \\ \hline
-    Cost \\ Exit Strategy & Replacing MongoDB with documented oriented databases wouldn't be much difficult because all of them; CouchDB, RethinkDB, RavenDB are similar at the core. Moreover, documents are close to objects as in ZODB. That's why coming from object-oriented world into document databases is a smoother path to follow. \\ \hline
+    Availability &
+    AGPLv3\\ \hline
+    Scalability &
+    Replication and sharding comes at default which are cornerstones of a scalable system. MongoDB supports master-slave replication via replica sets to provide redundancy and higher availability.
+    Auto-sharding is possible with configuration servers, sharded meta-data holders, and query routers, \textit{mongos}.
+    Moreover, it is faster compared to competitors since it loosened some constraints. However, these weak guarantees can bite the application developer if application is very strict about data lost/consistency even under high load.
+    MongoDB applies exclusive read-write lock so multiple reads can happen at the same time but a write requires a exclusive lock. There were problems related to the extent of write lock like being for whole \textit{mongod} instance but it is recently improved to be for a collection which should be improved for document level.
+    \\ \hline
+    Ease of Use Development &
+    Python is one of the officially supported languages.
+    MongoDB doesn't have a schema at all and very flexible. As a result, using MongoDB is a pleasure and development with MongoDB takes less time for the same feature in RDBMS.
+    \\ \hline
+    Transactions Consistency &
+    MongoDB gives guarantee of BASE, eventual consistency and it doesn't support transactions which is a really bad disadvantage for Indico where there are multiple inter-relations between entities. Some parts of Indico nicely fit into a document but putting everything into a document is difficult in terms of design complexity and size constraint. Then, inter-relations discourage MongoDB as main storage.
+    \\ \hline
+    Community Momentum &
+    Without any doubt, MongoDB is the most popular NoSQL database in the wild and it is very well documented.
+    \\ \hline
+    Cost \\ Exit Strategy &
+    Replacing MongoDB with documented oriented databases wouldn't be much difficult because all of them; CouchDB, RethinkDB, RavenDB are similar at the core.
+    Moreover, documents are close to objects as in ZODB. That's why coming from object-oriented world into document databases is a smoother path to follow.
+    \\ \hline
     Score & \rpt[1]{\FiveStarOpen}\rpt[5]{\FiveStar} \\
     \hline
   \end{tabular}
@@ -401,32 +444,56 @@ MongoDB is a document-oriented database. It stores malleable JSON-style document
 
 \subsection{CouchDB}
 
-Apache CouchDB is a multi-master document-oriented database that is completely ready for the web. From CAP Theorem, it's closer to AP system because it favors availability with its multi-master architecture while resolving conflicts are delegated to clients. MongoDB vs CouchDB has caused many heated debates but this discussion actually can be reduced to if system requires CP or AP.
+Apache CouchDB is a multi-master document-oriented database that is completely ready for the web.
+From CAP Theorem, it's closer to AP system because it favors availability with its multi-master architecture while resolving conflicts are delegated to clients.
+MongoDB vs CouchDB has caused many heated debates but this discussion actually can be reduced to whether consistency (CP) or availability (AP) is more important for the application.
 
-Document model of CouchDB is very similar to the model of MongoDB. Documents, key-value pairs as JSON, has a unique id to differentiate themselves. Values can be primitive values but also more complex types like lists or associative arrays.
+Document model of CouchDB is very similar to the model of MongoDB. Documents, key-value pairs as in JSON, has a unique id to differentiate themselves.
+Values can be primitive values but also more complex types like lists or associative arrays.
 
-CouchDB doesn't support joins but can support ACID semantics in the document level via implementing MVCC not to block reads by writes. Joins are possible via Map/Reduce tasks implemented as JavaScript functions. This tasks are called views in CouchDB terminology and they can also be indexed and synchronized to updates to documents.
+CouchDB doesn't support joins but can support ACID semantics in the document level via implementing MVCC not to block reads by writes.
+Joins are possible via Map/Reduce tasks implemented as JavaScript functions.
+This tasks are called views in CouchDB terminology and they can also be indexed and synchronized to updates to documents.
 
-CouchDB provides eventual consistency in addition to availability and partition tolerance. Each replica has its own copy of data, modifies it and sync bi-directional changes later. This design brings offline support at default which may be very useful for smart phones since smart phones frequently go offline and come back.
+CouchDB provides eventual consistency in addition to availability and partition tolerance.
+Each replica has its own copy of data, modifies it and sync bi-directional changes later.
+This design brings offline support at default which may be very useful for smart phones since smart phones frequently go offline and come back a later time.
 
-Other use case is running pre-define queries on top of occasionally changing data. Compared to adhoc query capabilities of MongoDB, views of CouchDB require a bit more design beforehand. However, if data structure is hardly changing, data is accumulating and versions of data are also important, then CouchDB is the perfect solution.
+Other use case is running pre-define queries on top of occasionally changing data.
+Compared to ad-hoc query capabilities of MongoDB, views of CouchDB require a bit more design beforehand.
+However, if data structure is hardly changing, data is accumulating and versions of data are also important, then CouchDB is the perfect solution.
 
 CouchDB is in production at Credit Suisse, dotCloud and Engine Yard but there are also some failure stories such as Ubuntu One.
 
 \begin{table}[!ht]
   \centering
   \caption{CouchDB Document-Oriented Database}
-  \renewcommand{\arraystretch}{1.5}% Spread rows out...
+  \renewcommand{\arraystretch}{1.5}
   \begin{tabular}{| >{\centering\bfseries}m{1in} | >{\centering\arraybackslash}m{4.5in} |}
 	\hline
     \textbf{Criteria} & \textbf{Feature} \\
 	\hline
-    Availability & CouchDB is one of the high priority projects in Apache Foundation and more mature compared to other NoSQL prouducts because it has longer history and is developed by more inter-companies developers. \\ \hline
-    Scalability & CouchDB shines at scalability with incremental multi-master replication and implements MVCC to prevent writes to block reads. \\ \hline
-    Ease of Use Development & It is developed for web and provides HTTP API so can be easily used with any language. Data is stored in documents as MongoDB which is more natural and these documents are very flexible without any schema. \\ \hline
-    Transactions Consistency & ACID-like eventual consistency is guaranteed. This is far from the transactions of relational world but closer than MongoDB to what is needed by Indico. \\ \hline
-    Community Momentum & Compared to MongoDB, CouchDB has a smaller community and it is preferred by companies in more niche categories such as PaaS providers while MongoDB is in production at eBay, Foursquare, New York Times and SourceForge. \\ \hline
-    Cost \\ Exit Strategy & Coming into CouchDB from object-oriented world is easier than relational since documents are similar to objects. Consistency guarantees of CouchDB is more analogous to ZODB than MongoDB but this makes CouchDB replacement more difficult compared to MongoDB with other document databases. \\ \hline
+    Availability &
+    CouchDB, licensed under Apache License 2.0, is one of the high priority projects in Apache Foundation and more mature compared to other NoSQL prouducts because it has longer history and is developed by more inter-company developers.
+    \\ \hline
+    Scalability &
+    CouchDB shines at scalability with incremental multi-master replication and also implements MVCC to prevent writes to block reads. Sharding may be done in application level but there are couple of products to extend CouchDB such as auto-sharding by CouchBase.
+    \\ \hline
+    Ease of Use Development &
+    It is developed for web and provides HTTP API so can be easily used with any language.
+    Data is stored in documents as MongoDB which is more natural and these documents are very flexible due to lack of schema.
+    \\ \hline
+    Transactions Consistency &
+    ACID-like eventual consistency is guaranteed.
+    This is far from the transactions of relational world but closer than MongoDB to what is needed by Indico.
+    \\ \hline
+    Community Momentum &
+    Compared to MongoDB, CouchDB has a smaller community and it is preferred by companies in more niche categories such as PaaS providers while MongoDB is in production at eBay, Foursquare, New York Times and SourceForge.
+    \\ \hline
+    Cost \\ Exit Strategy &
+    Coming into CouchDB from object-oriented world is easier than relational since documents are similar to objects.
+    Consistency guarantees of CouchDB is more analogous to ZODB than MongoDB but this makes CouchDB replacement more difficult compared to MongoDB with other document databases.
+    \\ \hline
     Score & \rpt[1]{\FiveStarOpen}\rpt[5]{\FiveStar} \\
     \hline
   \end{tabular}
@@ -435,30 +502,55 @@ CouchDB is in production at Credit Suisse, dotCloud and Engine Yard but there ar
 
 \section{Key-Value Stores}
 
-Key-value stores are basically hash table implementation for larger data. Each object has a unique key to be accessed with and values can be anything so key-value stores don't enforce any schema. Moreover, object databases can be as an example of key-value stores since value is just an object of a specific programming language.
+Key-value stores are distributed hash table implementation for larger data.
+Each object has a unique key to be accessed with and values can be anything, seen as pure byte streams, so key-value stores don't enforce any schema.
+Moreover, object databases can be as an example of key-value stores since value is just an object of a specific programming language.
 
-Key-value stores don't try to interpret bytes of values. As much as they give meaning to the value, they are closer to document-oriented databases. Nature of design makes them highly scalable but only scalability isn't enough because ease-of-use, usage difficulty and quering capabilities are also important. The more adhoc query capabilities key-value store has, the closer it is to document-oriented databases and the more usable it is in general so different products try to give a comprise in-between.
+Key-value stores don't try to interpret bytes of values.
+As much as they give meaning to the value, they are closer to document-oriented databases.
+Nature of design makes them highly scalable but only scalability isn't enough because ease-of-use, usage difficulty and quering capabilities are also important.
+The more ad-hoc query capabilities key-value store has, the closer it is to document-oriented databases and the more usable it is in general so different products try to give a compromise in-between.
 
-Due to simpler architecture, this is the category that has the most number of products. Moreover, products are very different in terms of consistency characteristics, key structure, backend and sortedness. Thus, there is a huge body of products in the market where main competitors are BerkeleyDB, Hazelcast, LevelDB, redis, Riak, Voldemort, memcached, Tarantool. Even document-oriented databases, MongoDB and CouchDB, can be seen as very capable key-value stores.
+Due to simpler architecture, this is the category that has the most number of products.
+Products are very different in terms of consistency characteristics, key structure, back-end and sorted-ness of keys. Main competitors are BerkeleyDB, Hazelcast, LevelDB, redis, Riak, Voldemort, memcached, Tarantool. Even document-oriented databases, MongoDB and CouchDB, can be seen as very capable key-value stores.
 
 \subsection{Redis}
 
-Redis is a very simple key-value storage solution. It can be compared to memcached on steroids - a key-value store with extra [data structures]1 and additional features such as transactions and PubSub. Contrarily to e.g. memcached, it also allows developers to user server-side Lua scripts, akin to stored procedures. Redis will by default keep its data only in memory, but data can also be persisted on disk if desired. RedisCluster, which is under development and should be released in the second half of 2013, will provide replication and strong consistency.
+Redis is a very simple key-value storage solution. It can be compared to memcached on steroids - a key-value store with extra [data structures] and additional features such as transactions and PubSub. Contrarily to e.g. memcached, it also allows developers to user server-side Lua scripts, akin to stored procedures. Redis will by default keep its data only in memory, but data can also be persisted on disk if desired. Redis Cluster is recently released to bring important features such as replication and strong consistency.
 
 \begin{table}[!ht]
   \centering
   \caption{Redis Key-Value Store}
-  \renewcommand{\arraystretch}{1.5}% Spread rows out...
+  \renewcommand{\arraystretch}{1.5}
   \begin{tabular}{| >{\centering\bfseries}m{1in} | >{\centering\arraybackslash}m{4.5in} |}
 	\hline
     \textbf{Criteria} & \textbf{Feature} \\
 	\hline
-    Availability & According to rankings, Redis is the most popular key-value store in use and BSD license is suitable for Indico. However, Redis is developed by only one developer, in the core. \\ \hline
-    Scalability & Redis is developed as a single threaded in-memory database. Later, optional durability is added by flushing memory in intervals aka. snapshotting or asynchronous append-only operation journaling. In December 2013, redis cluster, distributed version of Redis, is released but it is unstable and there is no success stories, at least for now. \\ \hline
-    Ease of Use Development & Python is a well supported language. However, there is no rich data structure that can easily map objects of ZODB. Thus, converting complex hiearchy of objects to Redis primitives will be a pain and time taking. \\ \hline
-    Transactions Consistency & Redis supports transactions but since it's single threaded, transactions are executed in a blocking fashion which deteoriates performance. \\ \hline
-    Community Momentum & Community size is medium since Redis can't be the only database system, it's more suited to work as a helper for another main storage engine but there are also a few successful only Redis deployments which have very very high write loads. Redis is in production at craiglist, flickr, stackoverflow. \\ \hline
-    Cost \\ Exit Strategy & Using Redis is a bit difficult due to lack of complex structures but when time has come to exit, it is also difficult because Redis provides some powerful data structures compared to other key-value stores and if these structures are used, they may not be replaced easily. Moreover, main memory is the limiting factor for the size of the data because data managed by Redis can't be bigger than available memory. \\ \hline
+    Availability &
+    According to rankings, Redis is the most popular key-value store in use and BSD license is suitable for Indico.
+    However, Redis is still developed by only one developer, in the core.
+    \\ \hline
+    Scalability &
+    Redis is developed as a single threaded in-memory database.
+    Later, optional durability is added by flushing memory in intervals aka. snap-shotting or asynchronous append-only operation, \textit{journaling}.
+    In December 2013, redis cluster, distributed version of Redis, is released but it is unstable and there is no success stories, at least for now.
+    \\ \hline
+    Ease of Use Development &
+    Python is a well supported language.
+    However, there is no rich data structure that can easily map objects of ZODB. Thus, converting complex hierarchy of objects to Redis primitives will be a pain and time taking.
+    \\ \hline
+    Transactions Consistency &
+    Redis supports transactions but since it's single threaded, transactions are executed in a blocking fashion which deteriorates performance.
+    It's also important to note that there is no roll-back for failed transactions.
+    \\ \hline
+    Community Momentum &
+    Community size is medium since Redis can't be the only database system, it's more suited to work as a helper for another main storage engine but there are also a few successful only Redis deployments which have very very high write loads.
+    Redis is in production at craiglist, flickr, stackoverflow.
+    \\ \hline
+    Cost \\ Exit Strategy &
+    Using Redis is a bit difficult due to lack of complex structures but when time has come to exit, it is also difficult because Redis provides some powerful data structures compared to other key-value stores and if these structures are used, they may not be replaced easily.
+    Moreover, main memory is the limiting factor for the size of the data because data managed by Redis can't be bigger than available memory.
+    \\ \hline
     Score & \rpt[2]{\FiveStarOpen}\rpt[4]{\FiveStar} \\
     \hline
   \end{tabular}
@@ -467,21 +559,21 @@ Redis is a very simple key-value storage solution. It can be compared to memcach
 
 \subsection{Riak}
 
-Riak is an open-source fault-tolerant key-value store inspired by Amazon Dynamo. It's very configurable in terms of trade-offs introduced by CAP Theorem.
+Riak is an open-source fault-tolerant key-value store inspired by Amazon Dynamo. It's very configurable in terms of trade-off proved by CAP Theorem.
 
-Riak replicates data in masterless fashion into $n_val$ nodes which is three at default. Where data will be written is achieved by consistent hashing. In case of node failure or network partition, keys can be written to neighbouring nodes (hinted handoff) and when failing nodes are back, new nodes offload their part and data updated while they are unavailable, is rewritten to them.
+Riak replicates data in master-less fashion into $n_val$ nodes which is \textit{three} at default. Where data will be written is achieved by consistent hashing. In case of node failure or network partition, keys can be written to neighbouring nodes (hinted hand-off) and when failing nodes are back, new nodes off-load their part and data, updated while they are unavailable, is rewritten to them.
 
-Reads requires R number of nodes to be read so cluster can tolerate N-R node failures.
+Reads requires $R$ number of nodes to be read so cluster can tolerate $N - R$ node failures.
 
-Consistent hashing enables distributing data evenly which makes query latency very predictable even in node failures. To make division more evenly, if there are low number of physical nodes, each Riak physical node creates vnodes virtual nodes. Moreover, it also enables assigning different amount of data to nodes by changing vnodes for the respective physical nodes if nodes have different specification (more RAM, SSD, etc.). Riak is totally designed for distributed environment so generally, adding more nodes makes operations faster.
+Consistent hashing enables distributing data evenly which makes query latency very predictable even in node failures. To make division more evenly, if there are low number of physical nodes, each Riak physical node creates \textit{vnodes} virtual nodes. Moreover, it also enables assigning different amount of data to nodes by changing \textit{vnodes} for the respective physical nodes if physical nodes have different specifications (more RAM, SSD, etc.). Riak is totally designed for distributed environment so generally, adding more nodes makes operations faster.
 
 All nodes are equal and there is no master so any request can be served by any node. Consistency of data under concurrent writes is achieved by vector clocks.
 
-Like CouchDB, Riak is written in Erlang and fully talks REST and supports MapReduce via JavaScript. In addition, Riak leverages Apache Solr to provide search capabilities and links to traverse objects via MapReduce to provide graph-like features. Moreover, even if Riak is a Key-value that requires access to objects via keys, it has more than that. Riak uses multiple backends; namely, memory, Bitcask, LevelDB and any combination of them together. If LevelDB or memory is in use, objects can queried by secondary indexes which are integer or string values to tag objects. Queries support exact match or range retrieval. Result can be paginated, streamed or even be given as input into MapReduce.
+Like CouchDB, Riak is written in Erlang and fully talks REST and supports MapReduce via JavaScript. In addition, Riak leverages Apache Solr to provide search capabilities and links to traverse objects via MapReduce to provide graph-like features. Moreover, even if Riak is a Key-value that requires access to objects via keys, it has more than that. Riak uses multiple backends; namely, memory, Bitcask, LevelDB and any combination of them together. If LevelDB or memory is in use, objects can queried by secondary indexes which are integer or string values to tag objects. Queries support exact match or range retrieval. Result can be paginated, streamed or even be given as input into MapReduce job.
 
-Like HBase, Riak support inter-cluster replication but Riak has a master where HBase is masterless. Replication is done in two modes, real time and fullsync in 6 hours.
+Like HBase, Riak support inter-cluster replication but Riak has a master where HBase is master-less. Replication is done in two modes, real time and full-sync in 6 hours.
 
-Riak is the choice of the majority of first 100 traffic websites such as GitHub and Google.
+Riak is the choice of the majority of first 100 traffic websites such as GitHub (URL shortener and pages) and Google via acquisitions.
 
 \begin{table}[!ht]
   \centering
@@ -491,11 +583,24 @@ Riak is the choice of the majority of first 100 traffic websites such as GitHub 
 	\hline
     \textbf{Criteria} & \textbf{Feature} \\
 	\hline
-    Availability & It has Apache License which is suitable for Indico and it is one of most popular key-value stores with Redis. \\ \hline
-    Scalability & Riak is inspired by Amazon Dynamo paper. It's developed for scalability and high availability so it is very easy to add/remove machines to cluster. Inter-cluster replication is even possible in master-slave fashion in two modes, asynchronous and synchronous. Intracluster, every piece of data is stored in multiple nodes and consistent hashing is used to divide the data between machines so Riak has very predictable latency. \\ \hline
-    Ease of Use Development & Python is one of the officially supported languages but mapping complex object structures to very primitive data types is difficult. Moreover, lack of proper transactions like in relational databases puts burden on readers. \\ \hline
-    Transactions Consistency & Riak implements vector clocks and reads use them to decide which write is the latest under concurrent updates so reads require extra work but writes always succeed. \\ \hline
-    Community Momentum & Riak is in production at very popular websites due to its highly fault-tolerant nature which is vital for a business takes huge traffic, a result of being big. \\ \hline
+    Availability &
+    It has Apache License which is suitable for Indico and it is one of most popular key-value stores with Redis.
+    \\ \hline
+    Scalability &
+    Riak is inspired by Amazon Dynamo paper.
+    It's developed for scalability and high availability so it is very easy to add/remove machines to cluster.
+    Inter-cluster replication is even possible in master-slave fashion in two modes, asynchronous and synchronous.
+    Intra-cluster, every piece of data is stored in multiple nodes and consistent hashing is used to divide the data between machines so Riak has very predictable latency.
+    \\ \hline
+    Ease of Use Development &
+    Python is one of the officially supported languages but mapping complex object structures to very primitive data types is difficult.
+    Moreover, lack of proper transactions like in relational databases puts burden on readers.
+    \\ \hline
+    Transactions Consistency &
+    Riak implements vector clocks and reads use them to decide which write is the latest under concurrent updates so reads require extra work but writes always succeed.
+    \\ \hline
+    Community Momentum &
+    Riak is in production at very popular websites due to its highly fault-tolerant nature which is vital for a business takes huge traffic, a result of being big. \\ \hline
     Cost \\ Exit Strategy & Entering into Riak as a main storage is difficult due to lack of complex data structures because complex structures of Indico should be converted into simple ones. There is no direct replacement of Riak in provided distributed fault tolerancy support so leaving Riak is also difficult. \\ \hline
     Score & \rpt[2]{\FiveStarOpen}\rpt[4]{\FiveStar} \\
     \hline
@@ -505,30 +610,44 @@ Riak is the choice of the majority of first 100 traffic websites such as GitHub 
 
 \section{Graph Databases}
 
-Graph Databases focus on graph structured dataset where adjacency of data is important and relations between entities make closer to each other. Graph databases try to optimize retrieval of these relations.
+Graph Databases focus on graph structured datasets where adjacency of data is important and relations between entities make them closer to each other.
+Graph databases try to optimize retrieval of these relations.
 
 Graph databases are composed of two main parts; underlying storage and processing engine:
 
-Underlying storage may be a native graph storage which relations directly point to physical location of entities. This is very different than foreign keys in RDBMS because there is no need of computation to retrieve related entities since entity itself contains links to physical location of its neighbours which can be used in O(1) time.
+\begin{table}[!ht]
+  \centering
+  \caption{Architecture of Graph Databases}
+  \renewcommand{\arraystretch}{1.5}
+  \begin{tabular}{| >{\centering\bfseries}m{2in} | >{\centering}m{1in} | >{\centering\arraybackslash}m{1in} |}
+	\hline
+    \textbf{Graph DB} & \textbf{Storage} & \textbf{Engine} \\ \hline
+	Twitter FlockDB & non-native & non-native \\ \hline
+	neo4j & native & native \\ \hline
+	OrientDB & native & native \\ \hline
+	Titan & non-native & native \\ \hline
+  \end{tabular}
+  \label{orientdb}
+\end{table}
 
-Computing engine implements standard graph algorithms on top of the storage engine. Performance and capabilities of this layer highly depends on storage. If storage is a native graph, graph can't be easily separated into parts which hoists scalability concerns. Even if database supports distributed architecture, whole data must be replicated to each node. However, having non-native storage enables processing giant graphs in the order of trillion edges via sharding capabilities of lower level storage, Cassandra or HBase, for example. Unless graph partition quality is enough, performance characteristics can have noticable differences since while native storage has whole data via O(1) access, non-native storage may need to talk to many nodes over network.
+Underlying storage may be a native graph storage which relations directly point to physical location of entities. This is very different than foreign keys in RDBMS because there is no need of computation to retrieve related entities since entity itself contains links to physical location of its neighbours which can be used in \textit{O(1)} time.
 
-From the architetural point of view, popular graph databases:
+Computing engine implements standard graph algorithms on top of the storage engine. Performance and capabilities of this layer highly depends on storage. If storage is a native graph, graph can't be easily separated into parts which hoists scalability concerns. Even if database supports distributed architecture, whole data must be replicated to each node. However, having non-native storage enables processing giant graphs in the order of trillion edges via sharding capabilities of lower level storage, Cassandra or HBase, for instance. Unless graph partition quality is enough, performance characteristics can have noticeable differences since while native storage has whole data via \textit{O(1)} access, non-native storage may need to talk to many nodes over network.
 
-Graph DB	Storage	Engine
-Twitter FlockDB	non-native	non-native
-neo4j	native	native
-OrientDB	native	native
-Titan	non-native	native
-Supporting a standard graph processing interface is important because it makes transition easier between databases according to changing needs of the domain. Therefore, even if there are graph databases with non-native graph processing in the market, they aren't listed (FlockDB is an exception due to being open source) because they are commercial, old (first examples of graph dbs) and have much smaller user community.
+Supporting a standard graph processing interface is important because it makes transition easier between databases according to changing needs of the domain. Therefore, even if there are graph databases with non-native graph processing in the market, they aren't listed (FlockDB is an exception due to being open source but it seems to be dead at the time of writing due to activity and Scala version, main development language) because they are commercial, old (first examples of graph databases) and have much smaller user community.
 
-Graph databases seems to be de facto go to database in the implementation of personal dashboard and recommendations, and socialization and gamification of Indico.
+Graph databases seems to be de-facto go to database in the implementation of personal dashboard and recommendations, and also next generation of features of Indico such as complete socialization and gamification.
 
 \subsection{OrientDB}
 
-OrientDB is a document-oriented database. Bu default, it works like a Document-oriented DB in which records are JSON-like documents. However, there is a "graph" layer implemented on top of this that allows for elaborate relations to be established between documents. In this layer, both vertex and edges are documents that can be transparently manipulated by the DB stack.
+OrientDB is a hybrid between document-oriented and graph databases. By default, it works like a Document-oriented DB in which records are JSON-like documents. However, there is a \textit{graph} layer implemented on top of this that allows for elaborate relations to be established between documents. In this layer, both vertex and edges are documents that can be transparently manipulated.
 
-There are 3 versions of OrientDB: 1. Standard 2. Graph 3. Enterprise (coming)
+There are 3 versions of OrientDB: 
+\begin{enumerate}
+  \item Standard (Document-oriented and Graph)
+  \item Graph (TinkerPop Stack)
+  \item Enterprise (coming with auto sharding/replication capabilities)
+\end{enumerate}
 
 Graph functionality is actually included in the standard edition - it's a common misunderstanding. The graph edition differs from the the standard one in the fact that it includes a TinkerPop stack. OrientDB is 100\% compliant with this graph processing stack. OrientDB can also be used as a key-value store, since document-orientation is a super-set of key-value stores. That is made possible by allowing records to be documents or flat strings. The data can be fully kept in memory if desired.
 
@@ -540,12 +659,25 @@ Graph functionality is actually included in the standard edition - it's a common
 	\hline
     \textbf{Criteria} & \textbf{Feature} \\
 	\hline
-    Availability & OrientDB is licensed under Apache License. \\ \hline
-    Scalability & With newest release in November 2013, OrientDB supports multi-master replication via Hazelcast. \\ \hline
-    Ease of Use Development & Python is supported by drivers provided from community. \\ \hline
-    Transactions Consistency & OrientDB supports ACID transactions and works as expected like relational counterparts. \\ \hline
-    Community Momentum & Recently, OrientDB is getting popular fairly quickly because it isn't a native graph database. It's a hybrid of document and graph databases where each node or edge is also a document as in MongoDB or CouchDB. Thus, it provides benefits of both worlds. \\ \hline
-    Cost \\ Exit Strategy & If it is compared to Neo4j, picking up OrientDB is easier because parts that are problematic in Neo4j can be mapped via more intuitive document nodes and edges. \\ \hline
+    Availability &
+    OrientDB is licensed under Apache License 2.0.
+    \\ \hline
+    Scalability &
+    With newest release in November 2013, OrientDB supports multi-master replication via Hazelcast.
+    \\ \hline
+    Ease of Use Development &
+    Python is supported by drivers provided from community (binary or HTTP).
+    \\ \hline
+    Transactions Consistency &
+    ACID with MVCC \\ \hline
+    Community Momentum &
+    OrientDB is getting popular fairly quickly because it isn't a native graph database.
+    It's a hybrid of document and graph databases where each node or edge is also a document as in MongoDB or CouchDB.
+    Thus, it is able to provide benefits of both worlds at the same time.
+    \\ \hline
+    Cost \\ Exit Strategy &
+    If it is compared to Neo4j, picking up OrientDB is easier because parts that are problematic in Neo4j can be mapped via more intuitive document nodes and edges.
+    \\ \hline
     Score & \rpt[1]{\FiveStarOpen}\rpt[5]{\FiveStar} \\
     \hline
   \end{tabular}
@@ -562,12 +694,23 @@ Graph functionality is actually included in the standard edition - it's a common
 	\hline
     \textbf{Criteria} & \textbf{Feature} \\
 	\hline
-    Availability & Neo4j is licensed under GPL and it is by far the most stable graph database in the market. \\ \hline
-    Scalability & Scalability is lacking because horizontal scaling is really difficult due to relations and a graph can not easily be divided. \\ \hline
-    Ease of Use Development & Some parts of Indico such as roles of users in events, links between conferences, sessions and contributions, etc. perfectly match links in a graph but not everything is mappable. \\ \hline
-    Transactions Consistency & Neo4j has ACID transactions like relational databases. \\ \hline
-    Community Momentum & Neo4j is the most popular product but in general, graph databases are niche products and mainly used by communication companies, where connections between entities are deadly important to business. \\ \hline
-    Cost \\ Exit Strategy & Starting to use Neo4j isn't difficult due to one-to-one mapping from ZODB objects to nodes and edges of Neo4j. Graph databases supports Gremlin, a graph traversing and manipulaion language like SQL in relational world. If Gremlin is used, Gremlin creates an abstraction layer on backend storage so backend can easily be changed with another Gremlin-compliant database such as OrientDB or Titan. \\ \hline
+    Availability &
+    Neo4j is licensed under GPL and AGPL (for enterprise) and it is by far the most stable graph database in the market.
+    \\ \hline
+    Scalability &
+    Scalability is lacking because horizontal scaling of a graph is really difficult due to relationships in a tightly connected graph.
+    \\ \hline
+    Ease of Use Development &
+    Some parts of Indico such as roles of users in events, links between conferences, sessions and contributions, etc. perfectly match links in a graph but not everything is mappable.
+    \\ \hline
+    Transactions Consistency &
+    Neo4j has ACID transactions like relational databases. \\ \hline
+    Community Momentum &
+    Neo4j is the most popular graph product but in general, graph databases are niche products and mainly used by communication companies, where connections between entities are deadly important to business.
+    \\ \hline
+    Cost \\ Exit Strategy &
+    Starting to use Neo4j isn't difficult due to 1-to-1 mapping from ZODB objects to vertexes and edges of Neo4j. Graph databases supports \textit{Gremlin}, a graph traversing and manipulation language like SQL in relational world. If Gremlin is used, Gremlin creates an abstraction layer on back-end storage like \textit{SQLAlchemy} does for relational databases so back-end can easily be changed with another Gremlin-compliant database such as OrientDB or Titan.
+    \\ \hline
     Score & \rpt[2]{\FiveStarOpen}\rpt[4]{\FiveStar} \\
     \hline
   \end{tabular}
@@ -584,12 +727,23 @@ Graph functionality is actually included in the standard edition - it's a common
 	\hline
     \textbf{Criteria} & \textbf{Feature} \\
 	\hline
-    Availability & Neo4j is licensed under GPL and it is by far the most stable graph database in the market. \\ \hline
-    Scalability & Scalability is lacking because horizontal scaling is really difficult due to relations and a graph can not easily be divided. \\ \hline
-    Ease of Use Development & Some parts of Indico such as roles of users in events, links between conferences, sessions and contributions, etc. perfectly match links in a graph but not everything is mappable. \\ \hline
-    Transactions Consistency & Neo4j has ACID transactions like relational databases. \\ \hline
-    Community Momentum & Neo4j is the most popular product but in general, graph databases are niche products and mainly used by communication companies, where connections between entities are deadly important to business. \\ \hline
-    Cost \\ Exit Strategy & Starting to use Neo4j isn't difficult due to one-to-one mapping from ZODB objects to nodes and edges of Neo4j. Graph databases supports Gremlin, a graph traversing and manipulaion language like SQL in relational world. If Gremlin is used, Gremlin creates an abstraction layer on backend storage so backend can easily be changed with another Gremlin-compliant database such as OrientDB or Titan. \\ \hline
+    Availability &
+    Apache License 2.0 \\ \hline
+    Scalability &
+    Titan has a notably different architecture compared to other graph databases via pluggable storage back-ends where scalable back-ends such as HBase or Cassandra brings scalable nature into Titan.
+    \\ \hline
+    Ease of Use Development &
+    Python is officially supported in binary protocol but while pluggable storage engine, which itself isn't easy to use, is bringing scalability, it also makes the system much more complex compared to OrientDB or Neo4j due to many moving parts.
+    \\ \hline
+    Transactions Consistency &
+    ACID and eventual consistency are possible but it mainly depends on the back-end characteristics.
+    \\ \hline
+    Community Momentum &
+    Graph databases are on the rise and data is getting bigger and bigger. Other graph databases can't divide their data but Titan can divide by following a different path. Thus, Titan can scale to the numbers OrientDB and Neo4j can't. If GitHub popularity of graph databases is ranked (all three are hosted on GitHub), then Titan seems to be the most popular one.
+    \\ \hline
+    Cost \\ Exit Strategy &
+	Start phase to use Titan may be probably difficult since required storage engine. Exit is easier comparably since Titan is also 100\% compliant with TinkerPop stack. If application is using TinkerPop stack, when graph databases is changed, there is nothing to be changed from the application point of view.
+    \\ \hline
     Score & \rpt[2]{\FiveStarOpen}\rpt[4]{\FiveStar} \\
     \hline
   \end{tabular}
