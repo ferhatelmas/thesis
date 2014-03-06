@@ -1,4 +1,3 @@
-
 % ----------------------------------------------------------------------
 %                   LATEX TEMPLATE FOR PhD THESIS
 % ----------------------------------------------------------------------
@@ -22,9 +21,16 @@
 \include{Latex/Macros/MacroFile1}
 
 \usepackage[normal]{subfigure}
-\usepackage[left=3cm, bottom=3cm]{geometry} 
+\usepackage[left=3cm, bottom=3cm]{geometry}
+\usepackage{listings}
+\usepackage[utf8x]{inputenc}
+\usepackage{ucs}
+\usepackage{bbding}
+\usepackage{array}
+\usepackage{booktabs}
+\usepackage{float}
 %: ----------------------------------------------------------------------
-%:                  TITLE PAGE: 
+%:                  TITLE PAGE:
 % ----------------------------------------------------------------------
 % below is to generate the title page with crest and author name
 
@@ -36,7 +42,7 @@
                /Author (Ferhat Elmas ferhat.elmas@epfl.ch)
                /CreationDate (D:20140314)  %format D:YYYYMMDDhhmmss
                /ModDate (D:20140314)
-               /Subject (xyz)
+               /Subject (Master Thesis - DB Project)
                /Keywords (SQL, NoSQL, Python, JavaScript, Web Development, GNU/GPL, Scalability) }
     \pdfcatalog { /PageMode (/UseOutlines)
                   /OpenAction (fitbh)  }
@@ -134,7 +140,7 @@
 
 \include{1/section1}	  
 \include{2/section2}					
-%\include{3/section3}  % you can add as many sections as you wish		
+\include{3/section3}
 
 
 % --------------------------------------------------------------

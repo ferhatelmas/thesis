@@ -1,90 +1,163 @@
 % this file is called up by thesis.tex
 % content in this file will be fed into the main document
 
-\chapter{Background and Related Work} % top level followed by section, subsection
+\chapter{Data Storage in Indico} % top level followed by section, subsection
 
-\par In this chapter, we first look at some topological aspects of today's OSN, in the context of their impact on the structure of the underlying P2P infrastructure. We then focus on specific ways of offering such infrastructure, and focus on the SpiderCast protocol. We then survey the related work on building P2POSN, discuss their approaches, and point out their connection to our own work, when applicable. Finally, we present some insights about the global characteristics of the social graphs and P2P network graphs, which further motivate our work.  
-          
+\par In this chapter, we first look at evolution of storage system in Indico so we mainly turn to ZODB to understand why it was chosen, what it accomplished and where it failed. This chapter, the enlightenment of studying ZODB will be basis for comparison of databases in the next chapter.
 
-\section{Online Social Networks}
+\section{The Early Days}
 
-\par The inherent characteristics of OSNs, as they were implemented in the currently available client-server architectures, should be considered when designing a P2P platform able to sustain an OSN with a large userbase. They have been comprehensively studied following (a) a purely \textit{topological view} \cite{Mislove, kumar}, focusing, for instance, on the structural position of their nodes, on their level of segmentation or connectivity, on the structural mechanisms that describe their evolution, etc; and (b) a \textit{semantic view} \cite{twitter, java}, which brings together structural characteristics and user data patterns (e.g. what type of information has a tendency to be further shared/retweeted and by what category of users, which are the most popular topics or users). All these characteristics may be used not only to help design the underlying architecture of OSN, but also to enhance P2P systems, recommendation systems, location based systems, trust computation and so on.
+\par Since the early days, Indico has been built around an object-oriented philosophy. In the early 2000's, when the project started, the Object-oriented world and Java in particular seemed to be heading towards a hegemonical position in the software world. Object-oriented philosophy managed to permeate into practically all fields of computer science, including, of course, web applications, which until then had been no more than collections of CGI scripts in several interpreted languages (which is the number one reason of why PHP is still so popular, isn't it?).
 
-\par In the context of this work, we will look at the former category of studies, because we are mainly interested to see how the topology of the P2P platform impacts the performance at the OSN level (e.g. a user may not want to keep links to any other users and/or to have no links to his friends). For example, the first OSN is considered to be created by the users who exchanged email messages, as a social graph was formed in this way. Today, popular OSNs, such as Facebook \cite{web1}, Twitter \cite{web2}, LinkedIn \cite{web3} and Flicker \cite{web4}, rely on such graphs to perform basic operations like sharing, organization or data location \cite{Mislove}. 
+\par Choosing Python as the development language for a new web application could have seemed a risky option in 2002, when buzzwords like "Django" or "Flask" were everything but real, but risk has shown to pay off in the long term: the Python web ecosystem is now flourishing and Indico is part of this movement. This means that months of development time can now be saved in the implementation of certain complex features since a full ecosystem of libraries and applications that were not there one decade ago emerged.
 
-\par It was observed that, for any OSN, the social graph is formed from three different types of groups (i.e. sets of nodes) \cite{kumar}: (a) \textit{zero-degree nodes} - usually not having an active participation within the network, (b) a \textit{giant connected component} - densely connected social network core, containing a large number of users and having at least one path between any pair of nodes (typically containing high-degree and highly active nodes), and (c) \textit{isolated communities} - small sets of nodes who interact only with each other. Note that in time the giant connected component tends to gather the vast majority of users \cite{Mislove,mascolo}, up to 99\% of nodes (as the isolated communities merge with it \cite{kumar}). This property holds for all the networks used for our system evaluation, being also preserved with high probability by the obtained overlay, as we will see in Chapter~4. We will further analyze all these characteristics and more, making also a short comparison with P2P networks characteristics, in Section 2.4.
+\par From the beginning, one of the most important (if not the most important) dependencies of Indico has been ZODB. While practically all the main dependencies have been replaced over time, from XML libraries to web frameworks, not to mention JavaScript libraries and templating engines, ZODB has stayed in. It's not hard to imagine that this was due to the fact that ZODB occupies a primordial role in the software package, by providing a transparent persistence layer over which the business logic of Indico is implemented.
 
+\par Once again, the choice of ZODB as data storage solution for Indico was daring, to say the least. Despite the growing popularity of the project in the early 2000's (mainly due to the increasing usage of the Zope framework), non-relational DBs were far from being considered mainstream. The enthusiasm around object-oriented data stores seemed to be increasing, but the following decade would show a clear predominance of relational databases over the competition.
 
-%There is an extremely large number of publications that analysis today's popular online social networks phenomenon and their characteristics such those previously enumerated \cite{Mislove, facebook, social, twitter}. Throughout this work we will consider many of these studies when making design decisions and designing relevant and realistic test cases. Thus, in the following fifth section of this chapter we will explain in more details those relevant for our work. 
+\section{The Decade of ZODB} 
 
+\par In 10 years of ZODB usage, a single serious incident due to a database problem was reported. It caused a service interruption of around one day, the only one to report in a decade. Many other minor incidents have happened, but never related to the DB itself or the technology behind it. In addition to that, there are no examples of data corruption to talk about. This said, it is not unfair to say that ZODB is a reliable product, a solid storage solution that can be trusted upon.
 
+ZODB is a glorified pickle store. This is both its strength and its weakness: it is intrinsically bound to Python and its Object-oriented subsystem. This provides a great degree of transparency and the expressiveness of an Object-oriented approach, but sacrifices, first of all, portability and, additionally (but also of great importance), the performance of some operations.
 
-\section{P2P Networks} 
+As an example, let's take a very simple DB operation that is usually taken for granted in the relational world: getting the list of names of all registrants in a conference:
 
-\par This thesis argues about the feasibility of a P2P system that aims to minimize as much as possible the users' tradeoffs when moving away from a social network service based on the client/server paradigm. Thus, when architecting a P2P-based OSN, we also need to deal with P2P-specific aspects, such as data availability, updates, network topology, search, data locality, etc. For this work, we mainly focus on obtaining data availability, scalability, and inexpensive communication. In this section we will point out only aspects related with this goal.
+\begin{lstlisting}[language=SQL]
+  SELECT last_name, first_name
+  FROM conference_attendants
+  WHERE conf_id = 1234;
+\end{lstlisting}
 
-%The requirements for architecting a P2P-based OSN are related both to P2P-specific issues, as well as OSN characteristics. On one side, we need to take care of data storage and updates, network topology, search and data locality, while on the other we should face the important volume of social data typical for any popular OSN. Furthermore, when having nodes with hundreds or maybe thousands of friends in the social network, it is very costly to maintain connections with each of them in order to propagate updates (wall posts, pictures uploading, etc.).
+This type of query can be performed in ZODB, but it will involve:
 
-\par The P2P model was made popular mostly by file-sharing and content distribution applications such as BitTorrent\cite{p2p1}, eDonkey\cite{p2p4}, Napster\cite{p2p2}, Gnutella\cite{p2p3}, etc. Apart from this, it is also used for real time communication between users. The nodes in a P2P network form overlays which can be classified as structured and unstructured. Even if unstructured overlays are often relatively simple, their search operations tend to be inefficient. On the other hand, structured P2P overlays usually use distributed hash tables (DHT) to perform directed searches, which makes lookups more efficient in locating data \cite{search2006, search2007}. Thus, for search performance, a structured overlay may be preferred. However, they tend to be more expensive to maintain especially under high churn rate, as their topology impose more constraints (which makes one think of the potentially large control message overhead and degraded routing performance). Unstructured overlays are arguably more resistant to churn, but it is commonly believed that they impose greater message overhead (as they generally use either flooding or random walks)\cite{Qiao,Castro}. On the other hand, when the overlay network exhibits the clustering and short path lengths of a small world network, it ensures that even message flooding approaches work well (with a low time-to-live for messages, resulting in a low message overhead) \cite{Aberer,Stutzbach}. 
+\begin{itemize}
+  \item Querying the DB for all the objects relative to attendants of the conference in question. This involves:
 
-\par Thus, this motivates the following question: how to propagate updates while maintaining an overlay which is scalable, churn-resistant, small diameter and with a low maintenance cost for connections. Basically, as we presume that nodes in a P2P social network will primary store the data they publish on, we need a solution for building an overlay network that allows efficient topic-based event routing in a highly dynamic environment. In this regard, the SpiderCast protocol supports publish/subscribe communication in a decentralized environment \cite{spidercast}. This protocol aims to build an overlay that is both topic-connected and has a low per-topic diameter, while requiring each node to maintain a low average number of connections. In our P2P social network case, the topics are the same with the nodes' profiles, hence the number of topics is equal with the number of nodes and each node interest contains only his friends. Thus, this protocol fits our needs since we can see the P2POSN as a publish/subscribe system in which each user subscribes to his friends. In addition, we can efficiently use the principles behind SpiderCast protocol to reduce the average node degree by manipulating the common interests (friends) between nodes for constructing a low-degree overlay in which all the nodes with a common friend form a connected component. Since the clustering coefficient is known to be high in social networks \cite{Mislove,facebook} we expect to have a large number of duplicate paths, a good premise for SpiderCast to be successful in this environment. Furthermore, the experiments on SpiderCast show that the average node degree decreases with the number of nodes \cite{spidercast}. When keeping the number of nodes constant, the increase of the number of topics moderately increases the average node degree, demonstrating also a good scalability with the number of topics.
+  \begin{itemize}
+    \item Retrieving the Conference object from the DB
+    \item Reconstructing the object from its serialized form (pickle)
+    \item Extracting the list of objects from the Conference object and requesting each one of them from the DB
+  \end{itemize}
+  \item Reconstructing (unpickling) the objects client-side
+  \item Retrieving the attributes in question from the reconstructed object.
+\end{itemize}
 
-\par In our context, we should keep in mind that the availability of any specific file is not guaranteed in a P2P network. We will see that this can become a problem for a P2P social network, as for today's OSNs this is a basic requirement. Thus, we need a cost efficient solution able to ensure data accessibility with a high probability. Towards obtaining high availability for distributed application in an environment prone to a high churn rate, a solution for self-healing active replication on top of a structured P2P overlay is proposed in \cite{semias}. Yet, each data item is associated with a unique key and its replicas are placed on the closest nodes to its key. This may not be the best approach for us as we might need to consider, for replication, node attributes such as: users diurnal behavior, number of friends, access patterns, interaction patterns, or we should provide a mean of computing the key so as to consider these attributes when computing the distance between keys, and is challenging to consider all of them at once.
+These are by no means slow operations. Specifically, Point 1 involves a significant amount of network latency (given that each object is requested separately) and Point 2 can be significantly slow if a large amount of objects is involved.
 
+This is the main issue with ZODB: objects are separate entities and, even though there are tricks that allow us to group/retrieve them together, those are not without their own disadvantages.
 
-\section{P2P Social Networks}
+Of course there are advantages to the Object-oriented approach: it's easy to work with and there is no need for conversion mechanism that will map classes in the object domain to database tables and rows. This mechanism is normally called "ORM" (Object-Relational Mapping) and is nowadays a common feature of many web frameworks (Ruby on Rails, Django, Symfony, etc.).
 
-\par A P2P network can be seen as a social network where users are the nodes linked according to their friendship relations; the similarities between the two have been previously explored in \cite{case,futureosnp2p}. Such networks become as large as hundreds of millions of nodes. The authors try to identify a pertinent set of opportunities and challenges for a P2P environment in order to support the deployment of a social network. Since this identification was made, services like Diaspora \cite{webp2pd1}, considered a Facebook's young competitor and Identi.ca \cite{webp2pd2}, a solution to decentralize Twitter, have started to appear.
+\subsection{The Age of Caching}
 
-\par Solutions for P2P social networking have come also from the research community. Gossple, which links users based on their similarities, is a network of anonymous social acquaintances that uses a gossip protocol for updates and communication \cite{gossple}. Gossple provides a way to meaningfully associate and exchange information between users' profiles, without requiring peers to have a previous relation. This is an interesting approach as one of the reasons for belonging to a particular social network may be to meet people. Thus, a user may seek to meet people with similar interests, passions, background, problems, professions and hobbies, shifting the key focus on finding like-minded people. Basically, the nodes periodically gossip data about their interest profiles and based on this interest compute the distances between them and other nodes and create links. However, our work differs in a number of aspects as we do not look into preserving users' anonymity and to creating links based on a defined interest metric. 
+Over the last 5 years, Indico has gradually become ubiquitous at CERN. The addition of a room booking module and later video-conferencing capabilities has for sure contributed to the broadening of the tool's audience. This has quickly increased the load over the system, and consequently the database. After a round of DB optimization fixes and several studies into ZODB, developers quickly realized that future growth needed to be sustained by a different strategy.
 
-\par An approach closely related with ours is PeerSoN, which aims to overcome the OSNs limitations by looking to find solutions to the privacy issues (i.e. encryption, access control and decentralization) and permitting direct exchange of data between users even without Internet connectivity, while preserving OSNs features (e.g. data availability and accessibility) \cite{peerson}. For ensuring that the private information is visible only by the right users, PeerSoN does not assume any kind of trust relationship between peers, but provides access control by using encryption and key management. While similar solutions could be adapted to the work presented in this thesis, we believe that we first need to define the design of a scalable P2POSN underlying infrastructure. 
+Performance improvement could be easily achieved in two different ways:
 
-\par LifeSocial.KOM is a P2P-based platform for secure online social networks which claims to provide the functionality of common online social networks in a totally distributed and secure manner \cite{kom}. It uses FreePastry for interconnecting the participating nodes and PAST for reliable, replicated data storage. Alas, it was tested at a very small-scale only. 
+\begin{itemize}
+  \item Faster DB access - this would depend on both the speed of the network connection between the DB and the web workers and the performance of the DB server instead. The choice was made of equipping the Indico DB server with SSD devices.
+  \item Less frequent DB access - this would rely on keeping more data on the client side and asking for DB content less often, also known as "caching", and ZODB already has a client cache. Unfortunately, it is per-process cache and state is not shared between caches. An application-level caching layer was implemented, which can use different caching backends.
+  \item DB replication - this could provide some relief to the main DB server during activity peaks, specifically by adding a second ZODB server that would mirror it. Web workers wanting to retrieve data could then contact to the second server instead of the first one, thus freeing the latter from keeping additional connections open for them.
+\end{itemize}
 
-\par In \cite{porkut} a privacy aware decentralized OSN called Porkut is introduced. The idea behind it is to exploit trust relationships in the social network for decentralized storage of OSN profiles and to address availability and accessibility issues by considering users' geographical locations and online time statistics, while using k-anonymity techniques for ensuring a privacy preserving indexing. Yet, they store the data in plain text relying on social pressure and monitoring for data integrity and privacy. A solution, for providing reliable storage, is to offer proper incentives to nodes, based on existing social relationships, in order to make them to cooperate for storing data and to remain in the system \cite{f2f}. However, this approach is suitable mainly for data intensive applications that do not require global visibility or global sharing. 
+Unfortunately, no simple and stable ZODB/ZEO replication mechanism was available at the time. The only exception was ZRS, which was a commercial product. An evaluation version was requested and it proved to be an effective solution. Its high price was the only deterring factor. It was decided that, for the moment, the first two solutions would be implemented. ZRS has recently been open sourced by Zope, which makes it a quite viable option for the future.
 
-\par There are also customized solutions such as SCOPE which is a prototype for spontaneous P2P social networking \cite{scope}. It provides the distributed database and lookup services deployed on DHT technology so as to support social networking in local areas. Finally, the Maze P2P network integrates both a friends' social network and a download network. The similarity between nodes' interest is revealed by the social network relationship within the Maze network \cite{maze}. Thus, Maze is improves the content search in the download network by using the ``small world'' property \cite{small} of the friends' social network as it enables small search path length.
+After a first implementation of caching with recourse to files, memcached support was finally added, which allowed for further performance improvements. Later, Redis support would be added.
 
+At the time of the writing of this article, caching is being used in several parts of the application, including conference timetables and the room booking system. Furthermore, new (more experimental) features such as the Dashboard are making use of specific forms of caching (Redis, in this case) in order to keep a secondary, fast, easy to query secondary storage. However, it also comes with its own problems; data must be synchronized with main DB which requires extra overhead for writes and maintenance cost of extra code (7 Lua scripts for server-side queries).
  
-\section{Brief Analysis of Social and P2P Networks Graphs}
+\section{The Need for a New Storage}
 
-\par When trying to determine if a shift from a client/server to a P2P infrastructure is feasible, all the characteristics of today's OSNs such as clustering coefficient, path length, access patterns, interaction patterns, etc., need to be considered so as to make a realistic feasibility study.
+The evolution of Indico's feature set has been increasingly towards a more personal, user-centered application with an emphasis on the events that matter to each particular user. The User Dashboard is a perfect example of the kind of feature that users can expect in the future from the system: a page that allows them to see which events are going on that involve them, as well as those taking place in their favorite categories.
 
- \begin{table}[t]
-    \begin{tabular}{ | p{4.6cm} | p{4.0cm} | p{4.0cm} |}
+Needless to say that the implementation of this kind of functionality implies the existence of mechanisms that allow a significant volume of information to be quickly queried and all matches retrieved. It is necessary to find out which events match a specific condition in a universe of hundreds of thousands (or potentially more) of them. This brings us to the problem of indexing.
+
+\subsection{Indexing}
+
+One of the most important features of a relational database is that arbitrary queries can be executed at any time. This allows for a great degree of flexibility, but makes things less predictable on the server side - a server has to know what to expect, otherwise it will take too much time going through all elements and checking whether they fit the criteria. Fortunately, most RDBMSs support database indexes and allow them to be created at the stroke of a key. Indexes allow results to be retrieved much more quickly at the cost of a small performance penalty on write operations.
+
+ZODB provides developers with several database-targeted data structures. Examples of that are \textit{BTree } and \textit{TreeSet} (implemented using BTrees), two structures aimed at large volumes of data that need to be stored in chunks and accessed in sub-linear time. BTrees are implemented on top of the Object-Oriented storage paradigm of ZODB (in separate "buckets", the nodes of the B-Tree). One important detail is that the ZODB server application implements no additional logic regarding these data structures - it handles objects in a pretty transparent way, simply retrieving them as they are requested. This is not completely true, as conflict resolution is done by the database itself and can be overridden by custom library code. All searches, comparisons and even changes on DB objects are, however, performed on the client side, and only then reflected in the database.
+
+The simplified logic on the server side together with the absence of a feature that can be compared to "stored procedures" leave the developer no other option than implementing everything on the client side. While this can be seen as a way of keeping things simple, it is highly inefficient as it implies the presence of all the relevant objects in the local context. This can be extremely slow for large data structures.
+
+As a result, while implementing indexes in ZODB is possible, these are also potentially much slower than their relational counterparts, not to mention that they have to be implemented at the application level, even though ZODB can persist them for future use. There are tools that help developers with this task, such as \textit{zope.index} and \textit{repoze.catalog}, but they do not solve the problem of having to implement the full query logic on the client side.
+
+\subsection{An Example: The Dashboard}
+ 
+The User Dashboard has been the first Indico module to be implemented on a storage mechanism that is not ZODB-based (Redis). While ZODB remains as the primary source of information for user-event relations, Indico is fetching this data directly from a Redis server, and updating it in parallel with Indico. Redis acts here as a "write-through" cache, a secondary data store that is, however, always up-to-date.
+
+There are reasons for this choice. They are mostly connected to the relation between the different entities in the problem.
+
+\hfill \includegraphics[scale=1]{2/figures/dashboard.png}
+
+The Dashboard is basically a time-ordered display of the relationships between a particular user and certain events. For instance, User 1 is an attendee of Event 1 or the manager of Event 2. Logically, other users can share the same role in the context of the same event - it's a many to many relationship. ZODB has no problem in defining many-to-many relationships - its OO-oriented approach allows references to be added pretty much anywhere, very much like in a graph - that is not the issue. However, there are actually two problems:
+
+\begin{enumerate}
+  \item It has already been mentioned before that ZODB fetches objects separately, so it is impossible to retrieve 100 pickled persistent Conference objects on one go.
+  \item Indexing, once again, is hard and not optimal
+\end{enumerate}
+
+A possible (naive) approach for a ZODB-based solution to this problem would be creating a BTree, ordered by time and event ID, containing the conference objects that relate to a particular user. If we wanted to concentrate everything in a single BTree, we could just use a composite key such as (\textit{user\_id, timestamp, event\_id, role}). This would allow us to effectively query events by user/timestamp. Still, it would be necessary to ask for and unpickle every single object for which a reference is returned (problem 1). Now, let's assume that problem 1 has minimal impact in terms of performance (which is not exactly true, but let's assume it just for the sake of the argument):
+
+\begin{itemize}
+  \item Querying by user would be OK - It's a simple range query on $(user_id, 0, '', '')$
+  \item Querying by timestamp for a particular user would be OK: range query on $(user_id, timestamp, '', '')$
+  \item Creating a new entry would be trivial - it would just be a matter of adding a new key to the tree, and the worst case scenario would be a bucket split/join operation, which would be far from disastrous performance-wise
+  \item Deleting a user would be OK - it would be a matter of finding out all corresponding keys using a range query and deleting them (O(N))
+  \item Detaching a user from a role would be possible in O(N)
+  \item Completely detaching a user from a particular event would be simple, as it is a subproblem of the previous problem
+\end{itemize}
+
+There are, however, some operations that are not as simple:
+
+\begin{itemize}
+  \item If \textbf{an event gets deleted}, one will need to remove all index entries that refer to it $-$ using this approach, that means going over all $user_ids$ and checking whether the event is present
+  \item Same happens if an event changes start date - the timestamp will change and one will need to update all corresponding entries
+\end{itemize}
+
+These are potential blockers, since event deletion is not such an uncommon operation. Of course there are known solutions to this problem, such as:
+
+\begin{itemize}
+  \item Marking the event as deleted and excluding deleted events from query results. The deletion of "old" events from the index could then be made in the background by a periodic job that would go over all users. This wouldn't solve the start date issue, though.
+  \item Having a reverse-lookup index that would map event ids to the corresponding keys in the primary index. This means that we would know that Event 2 has index keys (User 1, 12365, Event 2, manager) and (User 2, 12345, Event 2, attendee). This helps with both situations, but it's far from ideal as one would have to maintain two indices instead of one.
+\end{itemize}
+
+Similar problems have already been solved in the past using the second approach. In fact, a helper module (Catalog) was written, based on ZODB BTrees, that makes it easier for developers to deal with indexes, by abstracting some of the needed operations (like, for instance, maintaining a reverse-lookup index). However, debugging such index code is not an easy task.
+
+\begin{table}[t]
+	\centering
+    \begin{tabular}{ | c | l |}
     \hline
-    \textbf{Network} & \textbf{Average path length} & \textbf{Type (OSN or P2P)}\\ \hline
-    Facebook\cite{facebook} & 4.8 & OSN  \\ \hline
-    Flicker\cite{Mislove} & 5.67 & OSN  \\ \hline
-    Twitter\cite{twitter} & 4.12 & OSN \\ \hline
-    Maze friends network\cite{maze} & 7.69  & P2P  \\ \hline
-    Maze download network\cite{maze} & 9.17 & P2P \\ \hline
+    \textbf{Limitation} & \textbf{Explanation} \\ \hline
+    Ad-hoc queries & ... \\ \hline
+    Indexing & ... \\ \hline
+    Caching on the Server Side & ... \\ \hline
+    Replication & ... \\ \hline
+    Community & ... \\ \hline
     \end{tabular}
-    \caption{Average path lengths for OSNs and P2P networks}
-    \label{small_tab}
+    \caption{Limitations of ZODB}
+    \label{limitations}
 \end{table}
 
-\par Social graphs exhibits the ``small world'' property which practically measures to what extent a network can spread information quickly and widely \cite{small}. It is obtained with a small average path length and a high clustering coefficient. We observe that while ONSs have their average path length lower than that computed for world population [6.6] \cite{six}, the average path length for P2P networks is higher. The average path length values for some of the most popular social networks and some P2P networks are presented in Table \ref{small_tab}. The values for average path lengths and clustering coefficients obtained for all these graphs (so as for any ``small world'' network) compared with those obtained for a corresponding random network, with the same number of nodes and average degree per node, have an average path length close to the random network, while the clustering coefficient is much larger \cite{small}. The data in these papers suggests that even if for P2P networks the path length is slightly bigger and the clustering coefficient slightly lower, they seem to have similar topological structure. More, with redundancy and some solution for information availability P2P social networks can reach ``six degrees of separation" and in a P2P network we can take advantage of this short average path length. For example, flooding with relatively small time to live would cover most of the graph. In addition, if this is correlated with a large clustering coefficient, interest based clusters of peer can be identified. These features can influence the performance for operations such as information dissemination, friends search, etc., in a P2P social network.
- 
- 
- 
- %\par The first observation is that when the average number of friends per user is increasing the average path length has a bigger probability to decrease, because the probability of intersection between groups of friends is increasing. Second, when there are asymmetric relations as in Twitter, where users follow other users to obtain information, the path length will also decrease \cite{twitter}. 
+To sum up, saved data is hierarchical and contains highly interrelated connections between entities so that they can be accessed from many different points. Therefore, ability of querying arbitrarily and doing projections is vital from performance point of view. Overcoming this problem is possible via caching but it risks consistency of data and brings maintenance burden of extra code which means developers are working in spite of DB, not for new features with the support of DB. Rapid development, the reason of why ZODB is chosen at first isn't true any more. Moreover, its community is small, documentation and development speed is lacking. Last but not least, it is still a niche product even after 10 or so years.
 
-%\par In fact the small values of average path length of ONSs are almost certainly obtained because of the unnatural characteristics of these networks in comparison with real life relation. For the same reason a large clustering coefficient is improbably to be obtained with real life social relations. In addition, in the case of Maze \cite{maze}, which use peers social relations, can be observed that the obtained numbers for path length are bigger. 
+It seems to be clear, from what was mentioned above, that ZODB is not an optimal solution for this class of data problem.
 
-\par Some very interesting findings show that in unstructured Gnutella-like P2P overlays: a) the long-lived peers form a densely connected and stable core, which leads to stable and high connectivity among peers even in the presence of high churn and b) the network dynamics lead to a core overlay that exhibits “onion-like” biased connectivity (peers form ``layers'' depending on their uptime - peers with shorter uptime form a layer by forming connections with each other and with peers with higher uptime) \cite{Stutzbach}. This is quite similar with how the OSNs evolves in time: old users have a tendency of having larger friendbase and to move closer to the social network core and to also form a densely connected core \cite{kumar}.
+\section{Selection Criterias of New Database}
 
-\par  Considering only the ``static'' social graph does not suffice. A proof of the fact that social links are not valid indicators of real users' interactions, for the biggest OSN Facebook, is given in \cite{facebook}. There is a high skew distribution of users interaction, for instance less than 1\% of Facebook users interact with more than 50\% of their friends. Consequently, the social links should include data about users' interactions. For 50\% of users, 70\% of interaction comes from 7\% of friends and 100\% of interaction comes from 20\% of users. Basically, this also mean that the interaction graph can eliminate useless links in the ``static'' social graph, as the results correspond with theoretical limits on human social cognition\footnote[1]{ This limit is given by Dunbar's number (150) which represents the maximum number of stable social relations that one can maintain.} \cite{small}. These invalid links are the reason why, for instance, the OSNs exhibit lower values for path length than those obtain for world population. 99\% of Facebook users interact only with less than 150 friends. While the interaction links weight (i.e. the number of interactions between to users) could be used to further enhance our P2POSN system design by giving priority to stronger links (i.e. links with higher weight), this work focus on keeping all node's friends profiles accessible, regardless the interaction patterns. %In Chapter 4 we will discus and compare results obtained on both ``static'' and interaction social graphs.
+There are mainly 6 categories:
 
-\par However, while users' visible interaction links provide clues on how to design a social platform, the majority of user interactions in OSNs are latent interactions (e.g. browsing a user profile) \cite{latent}. This study is made on Renren, the largest OSN in China, on 42 million users, 1.66 billion social links and detailed histories of profile visits over a period of 90 days for more than 61,000 users. It analysis the latent interaction graph which basically models users' browsing behavior. In addition, it shows that the latent interaction graph has a clustering coefficient (0.03) lower than those obtained for social graph (0.18) and visible interaction graph (0.05), while in terms of connectivity it falls between them \cite{latent}. These characteristics could be relevant for us mainly for data location and replication. They allow the weighting of all the social links, in order to give priority to some particular links as well. Yet, this extension is beyond the scope of our work.
+\begin{enumerate}
+  \item \textit{Availability}: Replacement technology must be open source since Indico is an open source application, users can not be forced to use a commercial solution. Moreover, DB license should comply with the licenses of other software packages used.
+  \item \textit{Scalability / Replication}: Scalability is the main driving factor for the replacement of ZODB so it is a must in the system due to increasing usage and popularity of Indico. DB should have room for extensibility for the foreseeable future.
+  \item \textit{Ease of Use / Development}: DB should have good tool support for Python, main development language of Indico and it should decrease the time to implement new features so it should be transparent as much as possible like ZODB. Complexity of a feature should be come from application logic, not the commanding DB for data.
+  \item \textit{Transactions / Consistency}: Writes touch many entities at the same time due to devilish dependencies between entities. Thus, transaction capability of DB is deadly important to keep data consistent.
+  \item \textit{Community / Momentum}: Indico aims solving conference management problem, not the nitty gritty use-case details of a specific DB. When a problem is encountered, respective solution should mostly have been studied before. Successful deployments are an important representative of this requirement.
+  \item \textit{Cost / Exit Strategy}: Transition costs should be minimized and also dependency to DB should be as low as possible to decrease the exit cost when time to pay technical debt has come.
+\end{enumerate}
 
- 
-
-
-
-
-
+It is easily seen that ZODB isn't doing good because it is successful at only 2 criterias of 6; namely, being open source and transaction support.
 
 % ---------------------------------------------------------------------------
 % ----------------------- end of thesis sub-document ------------------------

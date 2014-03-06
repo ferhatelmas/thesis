@@ -66,6 +66,16 @@
   \end{figure}
 }
 
+\usepackage{forloop}% http://ctan.org/pkg/forloop
+\newcounter{loopcntr}
+\newcommand{\rpt}[2][1]{%
+  \forloop{loopcntr}{0}{\value{loopcntr}<#1}{#2}%
+}
+
+\newcommand{\mycell}[2][\vfill]{%
+  #1 \parbox[c]{\hsize}{\centering #2}%
+}
+
 
 %%% Local Variables: 
 %%% mode: latex

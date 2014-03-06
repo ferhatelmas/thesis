@@ -26,7 +26,7 @@ Indico (Integrated Digital Conferencing) is a web application for event manageme
 
 \section{Motivation - Why change?}
 
-\par Main driving force in development of Indico was a required service to manage event as following agenda of CDS, CERN Document Server. Thus, rapid production ready software was a necessity. Since there were many features to be implemented, time spent in other parts of the system must have been minimized.
+\par Main driving force in development of Indico was a required service to manage events as following agenda of CDS, CERN Document Server. Thus, rapid development of production ready software was a necessity. Since there were many features to be implemented, time spent in other parts of the system must have been minimized.
 
 \par The beginning of 2000s was the time objects and object oriented programming languages have become mainstream. As a result, there was an opportunist storm to try objects in everywhere and data stores had their own lion's share. Thus, an object database as a back-end for web application was a meaningful decision at that time. However, object databases never took off.
 
@@ -38,19 +38,19 @@ Indico (Integrated Digital Conferencing) is a web application for event manageme
 
 \par Firstly, limitations of ZODB should be extensively studied because most of the time, leaving aging production system behind and writing it from scratch results in failure. It's developed for more than 10 years, leaving ZODB means discarding this accumulated knowledge. Moreover, unless problems are made ridiculously clear, clean solutions can't be found.
 
-\par We will present these reasons and the ways how we tried to solve these limitations. After we become certain about that refactoring would be more cost-effective, next step is to define criterias for the replacement technology in terms of where ZODB has failed and also keeping the future of Indico in mind. 
+\par We will present these reasons and the ways how we tried to solve these limitations in existing system. After we become certain about that refactoring would be more cost-effective, next step is to define criterias for the replacement technology in terms of where ZODB has failed and also keeping the future of Indico in mind. 
 
-\par In the golden era of data store, started by Google and Amazon to implement their extreme requirements, there are zillions of candidates, even barely knowing each of them is a really difficult task. Goal is to collect and classify candidates that conforms to criterias as much as possible.
+\par In the golden era of data store, started by Google and Amazon to implement their extreme requirements, there are zillions of candidates, even barely knowing each of them is a really difficult task. Goal is to collect and classify candidates that conform to criterias as much as possible.
 
-\par After first elimination and classification, next round is to get familiar with each one via implementing a very small subset of Indico. Implementation is important because making sense of abstract concepts is difficult to understand and to interpolate expectations. Even if feature implemented is small, it makes easier  to predict the schedule and complexity.
+\par After first elimination and classification, next round is to get familiar with each one via implementing a very small subset of Indico. Implementation is important because making sense of abstract concepts is difficult to interpolate expectations. Even if feature implemented is small, it makes easier to predict the schedule and complexity.
 
-\par When know-how of each system is acquired, tipping point is choosing one or subset of candidates because in big applications, each part has different characteristics and requirements which maps into suboptimal solutions by using only one data store.
+\par When know-how of each system is acquired, tipping point is choosing one or subset of candidates because,  in big applications, each part has different characteristics and requirements which maps into suboptimal solutions by using only one data store.
 
-\par In either case, transition phase is long and painful so it should be well-planned in terms of bugs, needs of community and release cycle. The final bit is to implement the system conforming to the plan.
+\par In either case, transition phase is long and painful so it should be well-planned in terms of bugs, needs of community and release cycle. When schedule is carefully studied, the final bit is to implement the system conforming to the plan.
 
 \section{Outline - What is Done and Next?}
 
 \par In the following, we will give every tiny detail from the study of limitations of ZODB to new implementation with new polyglot database system. Moreover, database change involves refactoring huge body of code base so this project also aims to pay years of technical debt and to complete what we wish we had had in the beginning such as modular Indico. In conclusion section, how important steps are taken to modernise Indico code base and to prepare transition of Indico to Python 3 can be seen in addition to getting scalable by new back-end.
 
-\par Even if important steps are accomplished, that's enough because software is very volatile and requirements and technologies are quickly changing. While keeping basic principles like DRY and KISS, extending data system for specific cases will help for better scalability and easening development of certain features such as statistics or social features.
+\par Even if important steps are accomplished, that's not enough because software is very volatile and requirements and technologies are quickly changing. While keeping basic principles like DRY and KISS, extending data system for specific cases will help for better scalability and facilitate the development of certain features such as statistics and social features.
 
