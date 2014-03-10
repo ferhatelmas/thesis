@@ -651,6 +651,133 @@ There are 3 versions of OrientDB:
 
 Graph functionality is actually included in the standard edition - it's a common misunderstanding. The graph edition differs from the the standard one in the fact that it includes a TinkerPop stack. OrientDB is 100\% compliant with this graph processing stack. OrientDB can also be used as a key-value store, since document-orientation is a super-set of key-value stores. That is made possible by allowing records to be documents or flat strings. The data can be fully kept in memory if desired.
 
+We have played a bit more with OrientDB compared to other databases since its features seemed to be a better fit for Indico.
+
+\subsubsection*{Concepts}
+
+There are some concepts that make OrientDB quite different from its relational companions:
+
+\begin{itemize}
+  \item \textbf{Record} - an instance of data as row in RDBMS or document in document-oriented databases.
+  \item \textbf{Record ID} - auto-assigned unique number. It directly specifies the place of a record in disk, so it's not the equivalent to a logical ID (primary key) in RDBMS. That's why retrieving a record, when the ID is known, works in constant time, while it's O(log(n)) in RDBMS, using an index based on the id.
+  \item \textbf{Cluster} - collection of links to records. A Record ID is composed of a Cluster ID and a sequence number within the cluster.
+  \item \textbf{Class} - an abstraction of cluster used to group records. However, being a member of class doesn't put any constraints on records. Classes actually work in a similar way to their counterparts in Object-Oriented Programming and can bring new functionality via inheritance. By default, there is 1-to-1 mapping between classes and clusters and clusters can be seen as a table in an RDBMS that is used to group same type instances. However, in advanced usage, mapping may be n-to-m. Some examples:
+  \begin{itemize}
+	\item cluster \textit{person} to group all records from \textit{person} class (1-to-1)
+	\item cluster \textit{cache} to group most accessed records (1-to-n)
+	\item cluster \textit{car} to group all records belonging to the "car" class by type; suv, truck, etc. (n-to-1)
+	\item cluster \textit{daily} to group all records by creation day (n-to-m)
+  \end{itemize}
+\end{itemize}
+
+\subsubsection*{Security}
+
+OrientDB has powerful security mechanism compared to other NoSQL stores; namely, rule (bitmask for CRUD), role (group of rules) and user (executor of rules). Rules can be defined server, database, cluster or record level. These features brings OrientDB closer to RDBMS, which are strict and powerful in  security.
+
+\subsubsection*{Transactions}
+
+Since we heavily rely on transactions, transaction support is important in a database. MongoDB allows atomic operations at the document level. However, we may need operations that span multiple documents if the data is to be split across collections. On the contrary OrientDB is fully ACID-compliant:
+\begin{itemize}
+  \item It allows multiple reads and writes on the same server
+    \begin{itemize}
+      \item client-scoped and no lock on the server
+      \item implemented by a special property $@version$ tracked for each record. Mismatch means roll-back (MVCC).
+    \end{itemize}
+    \item Distributed transactions aren't supported. However, OrientDB got master-less replication via Hazelcast with latest release and as seen from code base, they have the base for distributed transactions. It's seen a must for horizontal scaling by the development team and planned for $2.0$ version. Thus, it's only a matter of time.
+    \item Nested transactions aren't supported. It's highly probable that they will be implemented while distributed transactions.
+\end{itemize}
+
+\subsubsection*{Speed}
+
+OrientDB seems to be really fast compared to other graph databases: 2 to 3 times faster than Neo4j in some benchmarks. In a fairly recent analysis (2012) by the Tokyo Institute of Technology and IBM, OrientDB was considered the fastest graph database from a group that included AllegroGraph, Fuseki and Neo4j (market leader).
+
+Why is OriendDB fast?
+
+\begin{itemize}
+  \item Cache
+  \begin{itemize}
+    \item Level 1 - Thread Level (for each open connection) in client and Database Level in server
+    \item Level 2 - JVM Level (shared between all connections) in client and Storage Level in server
+    \item Advanced Storage cache depends on implementation
+    \item OS cache for Memory Mapped files
+  \end{itemize}
+  \item Indexing
+  \begin{itemize}
+    \item Tree Index - MVRB-Tree (proprietary but open source algorithm that combines best parts of RB-Tree and B+ Tree). Tree Index is heavier and works in $O(logn)$ time but enables range queries.
+    \item Hash Index - Lighter and works in \textit{constant time}.
+    \item Composite Index (usable partially)
+  \end{itemize}
+  \item Hard Links
+  \begin{itemize}
+    \item Record ID is a pointer to a real physical place, not a logical concept so unlike RDBMS, it needs no calculation to access. As a result, Data loading is $O(1)$ time by record id.
+  \end{itemize}
+  \item Memory-mapped files
+  \begin{itemize}
+    \item Java New I/O (JSR 51 aka. NIO)
+    \item No system calls, since there is no switch between kernel and user modes
+	\item In-place update (\textit{seek} only required if a record is beyond the current page's boundaries)
+	\item Lazy loading (efficient usage of memory)
+	\item Adjusted page size via collected statistics about database
+	\item The downside is that 32-bit, being only to address at most 4 Gb in their virtual address space, are limited in terms of file size.
+  \end{itemize}
+  \item Transactions
+  \begin{itemize}
+    \item No lock for reads (MVCC)
+  \end{itemize}
+  \item Tools to tweak
+  \begin{itemize}
+    \item explain (standard as PostgreSQL or MongoDB)
+    \item profiler
+  \end{itemize}
+\end{itemize}
+
+\subsubsection*{Scaling}
+
+Scaling is done by multi-master scheme, each instance auto-magically synchronize each other. There are two modes:
+\begin{itemize}
+  \item synchronous: slower writes. The larger cluster size is, the slower writes because writes wait for each node to acknowledge success and quorum as in Cassandra or Riak is not configurable for now.
+  \item asynchronous: faster but naturally weaker consistency
+\end{itemize}
+
+Each node has the whole database which may be a problem in some cases if database is so large (in a 64-bit system, it is very unlikely since virtual address space huge enough). Sharding is possible by grouping nodes and forming clusters according to shard keys but that possibly would bring some logic to client for whom to talk.
+
+\subsubsection*{API}
+
+Java and Scala are the main supported languages. However, Python is also fully supported by 3 drivers:
+
+\begin{itemize}
+  \item Native driver, a wrapper over C library (liborient)
+  \item HTTP REST driver
+  \item \textit{Rexster} driver (only if graph edition is in use)
+\end{itemize}
+
+There is a powerful console (native) with auto-complete that makes trying commands/concepts fairly easy. Moreover, there is another open-source project called OrientDB studio to accomplish administrative tasks easier like what \textit{PHPMyAdmin} does for MySQL/MariaDB.
+
+% SHOULD KEEP?
+The company that is supporting the development of database and providing database in the cloud as a service, is closed to focus more on the development side. Whether it is a good thing is a big mystery because it is more likely that they couldn't keep up with a sustainable business due to market share of OrientDB and very established competitors.
+
+\subsubsection*{Extensibility}
+
+There are two ways supported:
+\begin{itemize}
+  \item Server-side functions (different than triggers): totally generic functions that are also capable of executing sql queries on the database.
+  \begin{itemize}
+    \item Java
+    \item JavaScript on Mozilla Rhino
+  \end{itemize}
+  \item Hooks (Java plug-ins to core)
+\end{itemize}
+
+\subsubsection*{Backup/Restore}
+
+There is import/export mechanism to easily move the data/schema or upgrade. Automatic regular backup is native but it should be enabled.
+
+There is also an emailing module which may be used for emergency, statistics, etc.
+
+\subsubsection*{Competitors}
+
+There are a lot of graph databases but there are a few in active development; namely, DEX, Neo4j and Titan. DEX is out of comparison since it is commercial. Neo4j is the leader. Titan is quite new but could catch up with others. Titan goes pretty good with other systems such as Cassandra, HBase, ElasticSearch, etc. which is very important in big data era, to be able to deploy a polyglot storage system. Moreover, it is getting popular faster than OrientDB by providing better scalability with underlying storage engine.
+
 \begin{table}[!ht]
   \centering
   \caption{OrientDB Graph Database}
@@ -663,10 +790,10 @@ Graph functionality is actually included in the standard edition - it's a common
     OrientDB is licensed under Apache License 2.0.
     \\ \hline
     Scalability &
-    With newest release in November 2013, OrientDB supports multi-master replication via Hazelcast.
+    With newest release in November 2013, OrientDB supports multi-master replication via Hazelcast but sharding is offloaded to application. Within graph databases with native graph storage, OrientDB seems to be the fastest but for a healthier evaluation, comparison with other databases from different disciplines is missing.
     \\ \hline
     Ease of Use Development &
-    Python is supported by drivers provided from community (binary or HTTP).
+    Python is supported by drivers provided from community (binary or HTTP). Being document and graph database enables flexible schema which is easier for refactoring and intuitiveness.
     \\ \hline
     Transactions Consistency &
     ACID with MVCC \\ \hline
@@ -674,6 +801,7 @@ Graph functionality is actually included in the standard edition - it's a common
     OrientDB is getting popular fairly quickly because it isn't a native graph database.
     It's a hybrid of document and graph databases where each node or edge is also a document as in MongoDB or CouchDB.
     Thus, it is able to provide benefits of both worlds at the same time.
+    However, there aren't enough successful big deployments which brings the question of if OrientDB is really production ready.
     \\ \hline
     Cost \\ Exit Strategy &
     If it is compared to Neo4j, picking up OrientDB is easier because parts that are problematic in Neo4j can be mapped via more intuitive document nodes and edges.
@@ -685,6 +813,18 @@ Graph functionality is actually included in the standard edition - it's a common
 \end{table}
 
 \subsection{Neo4j}
+
+% TODO: EXTEND NEO4J
+%Pros:
+%ACID
+%High availability
+%Most mature
+%Biggest community and market leader (Cisco, Deutsche Telekom, HP, Huawei)
+%Best search via external Lucene index
+%Cons:
+%Speed
+%Less flexible properties compared to document nodes in OrientDB (cumbersome working with complex data)
+%Dual license
 
 \begin{table}[!ht]
   \centering
@@ -709,7 +849,9 @@ Graph functionality is actually included in the standard edition - it's a common
     Neo4j is the most popular graph product but in general, graph databases are niche products and mainly used by communication companies, where connections between entities are deadly important to business.
     \\ \hline
     Cost \\ Exit Strategy &
-    Starting to use Neo4j isn't difficult due to 1-to-1 mapping from ZODB objects to vertexes and edges of Neo4j. Graph databases supports \textit{Gremlin}, a graph traversing and manipulation language like SQL in relational world. If Gremlin is used, Gremlin creates an abstraction layer on back-end storage like \textit{SQLAlchemy} does for relational databases so back-end can easily be changed with another Gremlin-compliant database such as OrientDB or Titan.
+    Starting to use Neo4j isn't difficult due to 1-to-1 mapping from ZODB objects to vertexes and edges of Neo4j.
+    Graph databases supports \textit{Gremlin}, a graph traversing and manipulation language like SQL in relational world.
+    If Gremlin is used, Gremlin creates an abstraction layer on back-end storage like \textit{SQLAlchemy} does for relational databases so back-end can easily be changed with another Gremlin-compliant database such as OrientDB or Titan.
     \\ \hline
     Score & \rpt[2]{\FiveStarOpen}\rpt[4]{\FiveStar} \\
     \hline
@@ -718,6 +860,19 @@ Graph functionality is actually included in the standard edition - it's a common
 \end{table}
 
 \subsection{Titan}
+
+% TODO: EXTEND TITAN
+%Pros:
+
+%ACID, vertex consistent or eventually consistent (according to storage)
+%Multiple backends (Cassandra, HBase, BerkeleyDB)
+%High availability and scability (standing on shoulders of giants)
+%Native TinkerPop stack
+%Search (Elastic or Lucene)
+%Cons:
+
+%Complexity of another storage
+%Gaining popularity but small user base (Cisco, Pearson)
 
 \begin{table}[!ht]
   \centering
@@ -749,6 +904,10 @@ Graph functionality is actually included in the standard edition - it's a common
   \end{tabular}
   \label{titan}
 \end{table}
+
+\subsection{Broadness and Validity of Survey}
+
+We try to give basic architecture details of each database but there are normally much more details to be considered. However, database ecosystem is quickly changing. We have seen multiple versions same database even while this writing. That's why we tried to keep more tiny details online in a living document. This enables us to easily update data and since it gives comparison more exposure, small mistakes are found and fixed earlier.
 
 % ---------------------------------------------------------------------------
 % ----------------------- end of thesis sub-document ------------------------

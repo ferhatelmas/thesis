@@ -1,0 +1,94 @@
+\chapter{Decision}
+
+After surveying and trying databases in a small case, next logical step is to decide on one or poly-glot database system. We decided on running ZODB with PostgreSQL for main data storage. Since Redis is very flexible and blazingly fast, Redis will be leveraged to offload some load from ZODB and PostgreSQL. This is the first phase of database change.
+
+Secondly, there is one more important goal to make Indico more user-friendly and includes:
+\begin{itemize}
+  \item Making Indico installable with one command
+  \begin{itemize}
+    \item Installing Indico for cloud now isn't easy since there is no pre-built package.
+  \end{itemize}
+  \item Providing Indico as SaaS (Software as a Service)
+  \begin{itemize}
+    \item Each installation of Indico is running independently so each one has its own resources and admin and also not all of them uses the latest version due to update/migration cost.
+    \item Everybody doesn't need full featured installation of Indico.
+    \item Collecting usage statistics and patters is difficult.
+  \end{itemize}
+  \item To be able to use more generic account such as Google, Yahoo, etc.
+  \item Making Indico more user-centric and social.
+\end{itemize}
+
+We have decided to use document-oriented database for statistics collection and within them, we decided on MongoDB since it's most accessible in term of know-how, popularity and features. Socialization of Indico requires graph processing in which graph databases excel but at the time of writing, there is no final decision. Current main focus is to change the de-facto back-end and it will take a great amount of effort. Until it's complete, graph databases will probably change a lot and no successful big deployments with graph databases except Neo4j and custom/proprietary solutions such as Facebook. Waiting until we have to give a decision seemed to be better in that situation.
+
+\section{Decision}
+
+PostgreSQL is chosen to replace ZODB. because
+\begin{itemize}
+  \item Most compliant DBMS with standards
+  \item Most extensible and enormous number of features
+  \begin{itemize}
+    \item Concurrency (ACID, 64 cores)
+	\item SQL (fully 92-compliant)
+	\item Index (bitmap index uses multiple indexes together)
+	\begin{itemize}
+	  \item B-Tree
+	  \item Hash
+	  \item Inverted (content $\rightarrow$ row)
+	\end{itemize}
+	\item Triggers
+	\item Schema
+	\begin{itemize}
+	  \item Powerful types
+	  \begin{itemize}
+	    \item array
+	    \item IP
+	    \item XML
+	    \item JSON
+	    \item range
+	  \end{itemize}
+	\end{itemize}
+	\item Table Inheritance \textcolor{mygreen}{fix me}
+	\item Auto Master-Slave Replication \textcolor{mygreen}{fix me}
+	\item Views
+	\begin{itemize}
+	  \item Materialized
+	  \item Modifiable
+	  \item Recursive
+	\end{itemize}
+	\item Notifications
+	\item Fine-grained security
+	\begin{itemize}
+	  \item Kerberos
+	  \item LDAP
+	  \item RADIUS
+	\end{itemize}
+	\item Regular Expressions
+	\item Online Backups
+	\item Full-text Search
+	\item Administrative tasks and Analytics
+	\begin{itemize}
+	  \item pgAdmin
+	\end{itemize}
+    \item Custom background workers
+	\begin{itemize}
+	  \item default
+	  \item pgQ
+	\end{itemize}
+	\item Rich plug-in ecosystem
+  \end{itemize}
+  \item Well-know successful deployments
+  \begin{itemize}
+    \item Amazon
+    \item Apple
+    \item Disqus
+    \item Facebook via Instagram
+    \item Heroku
+    \item Microsoft via Skype
+    \item Nasa
+    \item Yahoo
+  \end{itemize}
+  \item CERN accessibility
+  \begin{itemize}
+    \item There is a service, DB-on-Demand, at CERN and started to provide PostgreSQL boxes
+  \end{itemize}
+\end{itemize}
