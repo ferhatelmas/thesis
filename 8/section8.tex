@@ -1,2 +1,19 @@
 \chapter{Conclusion}
 
+Indico has become ubiquitous at CERN and so it started to see exponential increase in usage. Database back-end couldn't cope with high traffic and several improvements are adapted as workarounds such as application level indexing, usage of Redis as caching layer and separating costly query flows into an independent database like room booking module. These improvements were satisfactory but problem wasn't solved and it was just delayed for some time because development of new features efficiently was getting costlier in every passing day. The solution, database change, was obvious but also very involving that prevented it from being pronounced until now.
+
+Database will change but which database should be used requires details analysis because 
+\begin{itemize}
+  \item Database change is very expensive
+  \item There are many candidates in very different types
+  \item There are slight differences in features of candidates but also drop-in replacement is very rarely possible
+  \item Difficulty in estimation of future which combines features, traffic and services around Indico
+\end{itemize}
+
+In the light of these issues, we made a quite broad comparison within candidates and decided on PostgreSQL. Moreover, it's decided to incrementally extract modules and port into use new database so as to make aging complex code base more modular and extensible. Throughout improvement phase room booking part was already put into a different database since it has the most involving queries. Therefore, it's a good starting point with minimal dependence to main database and a need for a powerful back-end.
+
+Incremental change started with room booking part. Since ZODB and PostgreSQL will be coexist until transition is complete, distributed query machinery is put into place. Code structure is changed to conform MVC pattern. Our custom processing in controllers is delegated to libraries as much as possible which has provided better compatibility with Flask (web), SQLAlchemy (back-end) and Unicode in overall. 
+
+As room booking is being ported, PostgreSQL has shown that it's a natural fit for Indico schema. Expected performance and size improvements are achieved. Even if PostgreSQL performs well in itself, Redis is still in front of PostgreSQL to off-load some of its traffic.
+
+To sum up, very important steps are taken so far but there are still huge body of code waiting to be renovated.

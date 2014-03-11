@@ -1,1 +1,69 @@
 \chapter{Validation of PostgreSQL Decision}
+
+Porting Room Booking module to PostgreSQL via SQLAlchemy has proved that PostgreSQL is a good solution for the problems of Indico.
+
+\section{Comparison of PostgreSQL to Document-Oriented Databases in Room Booking}
+
+As seen in schema of Room Booking, it's a tree from left to right, locations to reservations. Document-oriented databases are tailored this kind of data. If whole data is composed of only room booking, then choosing a document-oriented database would be a better fit since only one entity is modified and document-oriented database such as MongoDB or CouchDB provide ACID-like guarantees in the document level.
+
+In PostgreSQL, schema is fully normalized and accessing objects on the right such as repetitions of reservations usually requires joining of locations and rooms. 
+
+Even if access flow gets more involving, writing queries with SQLAlchemy seemed to be comfortable because SQLAlchemy provides high level constructs such as directly mapping joins to lazy loaded collections in Python objects but it also enables literal SQL if needed. Thus, SQLAlchemy is in the both end of abstraction, it can be high and very low level at the same time according to needs.
+
+Joins are the worst point of relational world. Main feature provided by room booking is searching for availability and then choosing a room. This feature roughly requires join of whole database. In ZODB, this big join was being done in client after inefficiently loading many unnecessary objects and generating repetitions. With B-Tree indexes on materialized reservation repetitions, PostgreSQL performs it instantly.
+
+\section{Database Size}
+
+Firstly, there was a packing need in ZODB to remove old versions of objects. With transition to PostgreSQL, this problem is solved for free.
+
+Secondly, our biggest table in room booking is reservation repetitions with nearly half million rows which weren't put into database before. Even if they are materialized and room photos are put into database instead of being served from file system, database size is dramatically reduced compared to ZODB. It's around $\sim$400 megabytes and, now $\sim$130 megabytes, even $\sim$ 60 megabytes without occurrence and photo table. Thus, it is expected that main storage will occupy $\sim$7 gigabytes after complete transition which around $\sim$40 gigabytes, now because room booking showed PostgreSQL saved \%560 of space.
+
+\begin{table}[t]
+	\centering
+    \begin{tabular}{ | c | c |}
+    \hline
+    \textbf{Table} & \textbf{Size} \\ \hline
+	 pg\textunderscore toast\textunderscore 141558 & 37 MB \\ \hline
+     reservations & 28 MB \\ \hline
+     reservation\textunderscore occurrences & 27 MB \\ \hline
+     reservation\textunderscore edit\textunderscore logs & 14 MB \\ \hline
+     reservation\textunderscore occurrences\textunderscore pkey & 14 MB \\ \hline
+     reservation\textunderscore edit\textunderscore logs\textunderscore pkey & 4736 kB \\ \hline
+     reservations\textunderscore pkey & 3808 kB \\ \hline
+     pg\textunderscore toast\textunderscore 141558\textunderscore index & 432 kB \\ \hline
+     pg\textunderscore toast\textunderscore 2618 & 336 kB \\ \hline
+     pg\textunderscore toast\textunderscore 2619 & 136 kB \\ \hline
+     rooms\textunderscore attributes\textunderscore association & 72 kB \\ \hline
+     rooms\textunderscore attributes\textunderscore association\textunderscore pkey & 64 kB \\ \hline
+     rooms & 56 kB \\ \hline
+     rooms\textunderscore equipments\textunderscore pkey & 40 kB \\ \hline
+     rooms\textunderscore equipments & 24 kB \\ \hline
+     room\textunderscore equipments\textunderscore name\textunderscore location\textunderscore id\textunderscore key & 16 kB \\ \hline
+     ix\textunderscore locations\textunderscore name & 16 kB \\ \hline
+     ix\textunderscore start & 16 kB \\ \hline
+     ix\textunderscore end & 16 kB \\ \hline
+     locations\textunderscore pkey & 16 kB \\ \hline
+     pg\textunderscore toast\textunderscore 2618\textunderscore index & 16 kB \\ \hline
+     room\textunderscore equipments\textunderscore pkey & 16 kB \\ \hline
+    \end{tabular} 
+    \caption{Size of Room Booking Module in PostgreSQL}
+    \label{limitations}
+\end{table}
+
+Exact size information can be seen in the table. Some rows which don't exist in schema, \textit{pg\textunderscore toast} rows, are written in PostgreSQL output. PostgreSQL has a fixed page size, generally $\sim$8 kilobytes which uses to load or flush records in batch. Moreover, PostgreSQL doesn't permit large records to span multiple pages because it introduces complexity and inefficiency such that modification requires twice of time. PostgreSQL transparently divides these big rows to multiple small physical rows and it's called TOAST which also supports simple and fast compression. Therefore, our photos is a nice use-case for TOAST storage and as seen in table, \textit{pg\textunderscore toast\textunderscore 141558} is our photo table.
+
+\section{Documentation and Tooling}
+
+One of our main differentiating factors in choosing new database was community and room booking porting experiment has confirmed that PostgreSQL and SQLAlchemy have really good documentation and vibrant community. ZODB barely has had documentation and some technical articles are occasionally published but that's all. However, getting questions answered instantly isn't literally false with many contributors on respective IRC channels, dedicated Stackoverflow users and active developers.
+
+\section{Summary}
+
+Expected features of PostgreSQL are validated and seamlessly and efficiently works. ZODB implementation is mirrored to PostgreSQL but PostgreSQL enables features which are impossible in ZODB due to loading strategy. 
+
+For example, in ZODB, rooms can be loaded in different ways such that:
+\begin{itemize}
+  \item Only one room at a time
+  \item Subset of rooms if they are put into a specific collection, such as all rooms
+\end{itemize}
+
+Since only collections can be retrieved in one connection, would-be-needed rooms should be put into a collection in advance. When multiple different subsets are needed, many different collections must be arranged n database to be able to retrieve all of them in one access. Therefore, easiest way is to load everything and send them to client but this is costly. To overcome this problem, infinite scrolling is implemented. Implementing infinite scrolling in ZODB was very difficult but PostgreSQL now makes it straightforward which may be leveraged by many pages of Indico such as reservation availability listing and hierarchy of categories.

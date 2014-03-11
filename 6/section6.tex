@@ -29,6 +29,8 @@ We have tried all of them but \textit{eye} was the most stable to our experience
 
 Viewer may be patched but responses with developer of module back and forth were slow and since we don't want to lose time with it, we worked with only empty database at first. We loaded data incrementally by testing to find the tipping point where it fails. Next logical step is to analyse the mapped classes which isn't an easy task because we are talking about classes composed of $\sim$2000 lines.
 
+\hspace{-0.65cm}\includegraphics[scale=0.63]{6/figures/schema.png}
+
 It's a bit challenge because classes in ZODB uses \textit{set}, \textit{list}, \textit{dictionary} data structures of Python and there are places where data is replicated within objects. They should be fully normalized into their own tables.
 
 There are places which work nicely in small number of cases but don't scale:
@@ -57,7 +59,7 @@ We are dealing with objects and RDBMS is waiting pure serialized binary data. Th
 
 We have chosen SQLAlchemy. Django ORM would be a ridiculous idea without Django web framework. Storm is developed at Canonical and has shown capabilities in Launchpad scale but other than that, there aren't many . pony and peewee have a smaller user community and less features compared to SQLAlchemy.
 
-SQLAlchemy is a very stable library approaching its $1.0$ version and preferred by Mozilla, Nasa, OpenStack. Some of its nice features are:
+SQLAlchemy is a very stable library approaching its $1.0$ major version and preferred by Mozilla, Nasa, OpenStack. Some of its nice features are:
 \begin{itemize}
   \item Architecture: SQLAlchemy is composed of two layers, core and orm. Orm layer makes easier to play with objects but more fine-grained control is tuned by core layer.
   \item Declarative DDL, Data Definition Language.
@@ -71,7 +73,7 @@ Morever, Flask, micro-web framework, recently is integrated into Indico. Before 
 
 \section{MVC - Model View Controller}
 
-Indico isn't as modular as it should be. Every function related to one layer is put into the same file. For example, in Room Booking module, each request handler is in the same file so this file is huge, $\sim$ 15000 lines. Navigating, understanding and editing it is difficult. Even text editor may sometimes freeze while editing such a big file.
+Indico isn't as modular as it should be. Every function related to one layer is put into the same file. For example, in Room Booking module, each request handler is in the same file so this file is huge, $\sim$15000 lines. Navigating, understanding and editing it is difficult. Even text editor may sometimes freeze while editing such a big file.
 
 Since we're refactoring, why don't we make our lives easier for the future? MVC, model-view-controller, pattern is a well-known software pattern to divide applications into interconnected parts. MVC enables separation between how data is represented within system, how requests are handled and how data is shown to users.
 
