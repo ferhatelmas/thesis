@@ -91,7 +91,7 @@ If we were starting a web project now, WakandaDB seems a promising option with t
     used in MySQL with little effort. \\ \hline
 
     Score &
-    \rpt[3]{\FiveStarOpen}\rpt[3]{\FiveStar} \\
+    \rpt[3]{\FiveStar}\rpt[3]{\FiveStarOpen} \\
     \hline
   \end{tabular}
   \label{wakandadb}
@@ -146,7 +146,7 @@ One interesting drawback of ZODB being very tightly coupled with code base is th
     Transactions Consistency & ACID \\ \hline
     Community Momentum & Even if it's most well-known and mature object database in Python world, it's a niche project by being object database. Documentation and surrounding tool chain are lacking despite its long history. In overall, the company behind of ZODB is in the decline overall. \\ \hline
     Cost \\ Exit Strategy & Starting to use ZODB is easy by simple setup and heavy integration with Python. These are main reasons why it's chosen but not interesting any more like exit and exit isn't easy again due to same reasons; namely, tightly-coupled code base. \\ \hline
-    Score & \rpt[3]{\FiveStarOpen}\rpt[3]{\FiveStar} \\
+    Score & \rpt[3]{\FiveStar}\rpt[3]{\FiveStarOpen} \\
     \hline
   \end{tabular}
   \label{zodb}
@@ -232,7 +232,7 @@ In short, MySQL is a very successful relational database that has a flexible des
     Cost \\ Exit Strategy &
     ORM layer makes a relational database replacement easy so what is said for PostgreSQL is also valid for MySQL. Their difference are getting subtle and unimportant. Moreover, MySQL has forks for replacement without doing any change if they continue following trunk but they started to signalling detachment.
     \\ \hline
-    Score & \rpt[1]{\FiveStarOpen}\rpt[5]{\FiveStar} \\
+    Score & \rpt[5]{\FiveStar}\rpt[1]{\FiveStarOpen} \\
     \hline
   \end{tabular}
   \label{mysql}
@@ -271,7 +271,7 @@ It's self-contained, server-less (no daemon for waiting client connections), zer
     \\ \hline
     Cost \\ Exit Strategy &
     ORM layer provides good abstraction but lacking features raise question marks. \\ \hline
-    Score & \rpt[1]{\FiveStarOpen}\rpt[5]{\FiveStar} \\
+    Score & \rpt[3]{\FiveStar}\rpt[3]{\FiveStarOpen} \\
     \hline
   \end{tabular}
   \label{sqlite}
@@ -329,7 +329,7 @@ In RDBMS, fully normalization is recommended to prevent update anomalies. In Cas
     Cost \\ Exit Strategy &
     Cassandra uses its own query language, \textit{CQL}, which isn't a standard SQL but pretty similar to SQL so making an intra-class change is much harder than other types of database systems. However, there are some projects recently to use Cassandra as a back-end such as MySQL/MariaDB and Titan, a graph database. Thus, transition to these products may require less effort.
     \\ \hline
-    Score & \rpt[2]{\FiveStarOpen}\rpt[4]{\FiveStar} \\
+    Score & \rpt[4]{\FiveStar}\rpt[2]{\FiveStarOpen} \\
     \hline
   \end{tabular}
   \label{cassandra}
@@ -387,7 +387,7 @@ HBase doesn't support transactions but atomic operations are supported in the ro
     Cost \\ Exit Strategy &
     Entering and exiting from HBase are costly because it lives within Hadoop ecosystem and there is no direct replacement as powerful as HBase for very big data.
     \\ \hline
-    Score & \rpt[2]{\FiveStarOpen}\rpt[4]{\FiveStar} \\
+    Score & \rpt[4]{\FiveStar}\rpt[2]{\FiveStarOpen} \\
     \hline
   \end{tabular}
   \label{hbase}
@@ -436,7 +436,7 @@ The schema of a MongoDB is basically non-existent - there is the concept of \tex
     Replacing MongoDB with documented oriented databases wouldn't be much difficult because all of them; CouchDB, RethinkDB, RavenDB are similar at the core.
     Moreover, documents are close to objects as in ZODB. That's why coming from object-oriented world into document databases is a smoother path to follow.
     \\ \hline
-    Score & \rpt[1]{\FiveStarOpen}\rpt[5]{\FiveStar} \\
+    Score & \rpt[5]{\FiveStar}\rpt[1]{\FiveStarOpen} \\
     \hline
   \end{tabular}
   \label{mongodb}
@@ -494,7 +494,7 @@ CouchDB is in production at Credit Suisse, dotCloud and Engine Yard but there ar
     Coming into CouchDB from object-oriented world is easier than relational since documents are similar to objects.
     Consistency guarantees of CouchDB is more analogous to ZODB than MongoDB but this makes CouchDB replacement more difficult compared to MongoDB with other document databases.
     \\ \hline
-    Score & \rpt[1]{\FiveStarOpen}\rpt[5]{\FiveStar} \\
+    Score & \rpt[5]{\FiveStar}\rpt[1]{\FiveStarOpen} \\
     \hline
   \end{tabular}
   \label{couchdb}
@@ -551,7 +551,7 @@ Redis is a very simple key-value storage solution. It can be compared to memcach
     Using Redis is a bit difficult due to lack of complex structures but when time has come to exit, it is also difficult because Redis provides some powerful data structures compared to other key-value stores and if these structures are used, they may not be replaced easily.
     Moreover, main memory is the limiting factor for the size of the data because data managed by Redis can't be bigger than available memory.
     \\ \hline
-    Score & \rpt[2]{\FiveStarOpen}\rpt[4]{\FiveStar} \\
+    Score & \rpt[4]{\FiveStar}\rpt[2]{\FiveStarOpen} \\
     \hline
   \end{tabular}
   \label{redis}
@@ -602,7 +602,7 @@ Riak is the choice of the majority of first 100 traffic websites such as GitHub 
     Community Momentum &
     Riak is in production at very popular websites due to its highly fault-tolerant nature which is vital for a business takes huge traffic, a result of being big. \\ \hline
     Cost \\ Exit Strategy & Entering into Riak as a main storage is difficult due to lack of complex data structures because complex structures of Indico should be converted into simple ones. There is no direct replacement of Riak in provided distributed fault tolerancy support so leaving Riak is also difficult. \\ \hline
-    Score & \rpt[2]{\FiveStarOpen}\rpt[4]{\FiveStar} \\
+    Score & \rpt[4]{\FiveStar}\rpt[2]{\FiveStarOpen} \\
     \hline
   \end{tabular}
   \label{riak}
@@ -806,7 +806,7 @@ There are a lot of graph databases but there are a few in active development; na
     Cost \\ Exit Strategy &
     If it is compared to Neo4j, picking up OrientDB is easier because parts that are problematic in Neo4j can be mapped via more intuitive document nodes and edges.
     \\ \hline
-    Score & \rpt[1]{\FiveStarOpen}\rpt[5]{\FiveStar} \\
+    Score & \rpt[5]{\FiveStar}\rpt[1]{\FiveStarOpen} \\
     \hline
   \end{tabular}
   \label{orientdb}
@@ -853,7 +853,7 @@ There are a lot of graph databases but there are a few in active development; na
     Graph databases supports \textit{Gremlin}, a graph traversing and manipulation language like SQL in relational world.
     If Gremlin is used, Gremlin creates an abstraction layer on back-end storage like \textit{SQLAlchemy} does for relational databases so back-end can easily be changed with another Gremlin-compliant database such as OrientDB or Titan.
     \\ \hline
-    Score & \rpt[2]{\FiveStarOpen}\rpt[4]{\FiveStar} \\
+    Score & \rpt[4]{\FiveStar}\rpt[2]{\FiveStarOpen} \\
     \hline
   \end{tabular}
   \label{neo4j}
@@ -899,7 +899,7 @@ There are a lot of graph databases but there are a few in active development; na
     Cost \\ Exit Strategy &
 	Start phase to use Titan may be probably difficult since required storage engine. Exit is easier comparably since Titan is also 100\% compliant with TinkerPop stack. If application is using TinkerPop stack, when graph databases is changed, there is nothing to be changed from the application point of view.
     \\ \hline
-    Score & \rpt[2]{\FiveStarOpen}\rpt[4]{\FiveStar} \\
+    Score & \rpt[4]{\FiveStar}\rpt[2]{\FiveStarOpen} \\
     \hline
   \end{tabular}
   \label{titan}
@@ -908,7 +908,3 @@ There are a lot of graph databases but there are a few in active development; na
 \subsection{Broadness and Validity of Survey}
 
 We try to give basic architecture details of each database but there are normally much more details to be considered. However, database ecosystem is quickly changing. We have seen multiple versions same database even while this writing. That's why we tried to keep more tiny details online in a living document. This enables us to easily update data and since it gives comparison more exposure, small mistakes are found and fixed earlier.
-
-% ---------------------------------------------------------------------------
-% ----------------------- end of thesis sub-document ------------------------
-% ---------------------------------------------------------------------------
