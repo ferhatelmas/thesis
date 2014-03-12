@@ -99,6 +99,8 @@ If we were starting a web project now, WakandaDB seems a promising option with t
 
 \subsection{ZODB}
 
+\vspace{-1cm} \hspace{2.9cm} \includegraphics[scale=0.6]{3/figures/zodb.png}
+
 The Zope Object Database is an object-oriented database to transparently persist Python objects.
 In the beginning, it was a part of web application framework but later it is extracted to be used independently.
 
@@ -160,6 +162,10 @@ Relational databases category is the one most battle-tested for at least 20 year
 
 \subsection{PostgreSQL}
 
+\vspace{-1.15cm} \hspace{4.1cm} \includegraphics[scale=0.2]{3/figures/postgresql.png}
+
+General properties are provided here but explanation of in-depth features are given later since PostgreSQL is the winner of our survey.
+
 \begin{table}[!ht]
   \centering
   \caption{PostgreSQL Relational Database}
@@ -186,7 +192,11 @@ Relational databases category is the one most battle-tested for at least 20 year
   \label{postgresql}
 \end{table}
 
+\vspace{1.2cm}
+
 \subsection{MySQL}
+
+\vspace{-2.2cm} \hspace{3.2cm} \includegraphics[scale=0.5]{3/figures/mysql.jpg}
 
 MySQL is the most popular relational database by far. MySQL owes its popularity to investing into its performance by lacking some features exist in PostgreSQL. This is a long story which has a dramatic end because PostgreSQL increased its performance in recent versions while MySQL has adapted most of the lacking features. Even if gap is closing in simple queries, PostgreSQL performs better in complex queries involving sub-queries and/or multiple joins via its well-studied query optimizer.
 
@@ -240,6 +250,8 @@ In short, MySQL is a very successful relational database that has a flexible des
 
 \subsection{SQLite}
 
+\vspace{-1.15cm} \hspace{3cm} \includegraphics[scale=0.2]{3/figures/sqlite.jpg}
+
 SQLite is an embedded relational database management system. In lay-man terms, it is a tiny C library that can be dynamically linked. Unlike MySQL or PostgreSQL, it's not a separate process that is waiting for requests. On the contrary, it is a part of the application and can be pictures as an independent module within application and can be used as function calls like other methods.
 
 All information related to database is stored into a platform agnostic file. This is similar to file storage of ZODB and by copying that file, database can easily moved to wherever it is required.
@@ -284,6 +296,8 @@ Column-family databases are designed to handle large amount of data across many 
 There are also column-oriented relational database. They see data in terms of columns instead of rows because they physically store all data of one column together. Therefore, they are better in data-warehousing and customer relationship management (CRM). Except this design difference, their features are more or less same well-known row-oriented RDBMSs. Commercial product, Microsoft SQL Server supports both storage design, for instance. Vocabulary is similar but they are very different designs.
 
 \subsection{Cassandra}
+
+\vspace{-1.15cm} \hspace{3.5cm} \includegraphics[scale=0.4]{3/figures/cassandra.jpg}
 
 Apache Cassandra is an open source distributed (mainly) column oriented key-value store achieving high performance and availability. According to CAP theorem, a distributed system can't provide consistency, availability and partition tolerance at the same time. As a distributed database, Cassandra chooses to provide availability and partition tolerance (aka. distributed) with no single point of failure by assigning same role to each node in the cluster. In addition, Cassandra supports master-less asynchronous inter-cluster replication for higher availability guarantees. Meantime, third dimension, consistency, can also be adjusted according to the needs of applications. Since there is no difference between nodes, performance linearly scales as much as new nodes are added into cluster without interrupting existing nodes.
 
@@ -339,7 +353,11 @@ In RDBMS, fully normalization is recommended to prevent update anomalies. In Cas
   \label{cassandra}
 \end{table}
 
+\vspace{0.5cm}
+
 \subsection{HBase}
+
+\vspace{-1.8cm} \hspace{2.7cm} \includegraphics[scale=0.4]{3/figures/hbase.jpg} \vspace{-0.4cm}
 
 Apache HBase is open source clone of Google's BigTable. It's fault tolerant column oriented database with compression and version control for data. HBase is a CP system according to CAP Theorem.
 
@@ -406,6 +424,8 @@ Document databases try to provide benefits of both worlds because they don't hav
 
 \subsection{MongoDB}
 
+\vspace{-1.15cm} \hspace{3.6cm} \includegraphics[scale=0.2]{3/figures/mongodb.jpg}
+
 MongoDB is the most popular document-oriented database.
 It stores flexible JSON-style documents and provides a set of functionalities that is closer to that of RDBMS, namely a full-fledged query interface, full indexing support and in-place updates.
 The schema of a MongoDB is basically non-existent - there is the concept of \textit{collections} that can be compared to relational tables, but objects can have whatever fields and values the programmer sees fit. An object is not constrained in any way just because it belongs to a particular collection.
@@ -447,6 +467,8 @@ The schema of a MongoDB is basically non-existent - there is the concept of \tex
 \end{table}
 
 \subsection{CouchDB}
+
+\vspace{-1.15cm} \hspace{3.8cm} \includegraphics[scale=0.2]{3/figures/couchdb.jpg}
 
 Apache CouchDB is a multi-master document-oriented database that is completely ready for the web.
 From CAP Theorem, it's closer to AP system because it favors availability with its multi-master architecture while resolving conflicts are delegated to clients.
@@ -520,6 +542,8 @@ Products are very different in terms of consistency characteristics, key structu
 
 \subsection{Redis}
 
+\vspace{-1.15cm} \hspace{3cm} \includegraphics[scale=0.2]{3/figures/redis.jpg}
+
 Redis is a very simple key-value storage solution. It can be compared to memcached on steroids - a key-value store with extra [data structures] and additional features such as transactions and PubSub. Contrarily to e.g. memcached, it also allows developers to user server-side Lua scripts, akin to stored procedures. Redis will by default keep its data only in memory, but data can also be persisted on disk if desired. Redis Cluster is recently released to bring important features such as replication and strong consistency.
 
 \begin{table}[!ht]
@@ -562,6 +586,8 @@ Redis is a very simple key-value storage solution. It can be compared to memcach
 \end{table}
 
 \subsection{Riak}
+
+\vspace{-1.15cm} \hspace{2.7cm} \includegraphics[scale=0.2]{3/figures/riak.jpg}
 
 Riak is an open-source fault-tolerant key-value store inspired by Amazon Dynamo. It's very configurable in terms of trade-off proved by CAP Theorem.
 
@@ -643,6 +669,8 @@ Supporting a standard graph processing interface is important because it makes t
 Graph databases seems to be de-facto go to database in the implementation of personal dashboard and recommendations, and also next generation of features of Indico such as complete socialization and gamification.
 
 \subsection{OrientDB}
+
+\vspace{-1.15cm} \hspace{3.5cm} \includegraphics[scale=0.2]{3/figures/orientdb.jpg} \vspace{0.3cm}
 
 OrientDB is a hybrid between document-oriented and graph databases. By default, it works like a Document-oriented DB in which records are JSON-like documents. However, there is a \textit{graph} layer implemented on top of this that allows for elaborate relations to be established between documents. In this layer, both vertex and edges are documents that can be transparently manipulated.
 
@@ -818,6 +846,8 @@ There are a lot of graph databases but there are a few in active development; na
 
 \subsection{Neo4j}
 
+\vspace{-1.15cm} \hspace{3cm} \includegraphics[scale=0.2]{3/figures/neo4j.jpg}
+
 Neo4j is the most popular and mature graph database which is deployed at Cisco, HP, Huawei, etc.
 Neo4j adapts dual license, community and enterprise. There are huge differences between them in terms of scalability. Enterprise is fully ready for horizontal scalability with default cache, auto-sharding, master-slave replication where none of them available in community edition. Documentation and resources are plentiful compared other graph databases but lacking features between different versions risks accessibility.
 
@@ -857,6 +887,8 @@ Both versions support ACID transactions and leverage Lucene for fast searching. 
 \end{table}
 
 \subsection{Titan}
+
+\vspace{-1.15cm} \hspace{3cm} \includegraphics[scale=0.2]{3/figures/titan.jpg}
 
 Titan is a graph database that targets scalability with supporting scalable NoSQL databases. Graphs are connected so dividing graph into multiple nodes is extremely difficult without data-aware solutions. Thus, main scalability idea is to replicate the graph into multiple nodes via master-slave or multi-master scheme but this prevents scaling beyond capabilities of weakest node. While in terms of query latency, this solution can provide reasonably good performance as Neo4j and OrientDB. While two unrelated points which are very far from each other are being updated, synchronization and locking are unnecessary. This is main problem Titan is trying to solve at the expense of losing ACID transactions. Moreover, scalability is more than throughput such that databases replicates whole graph in every node miserably fail scaling graphs in size. There are theoretical limits like 2 billion vertexes in Neo4j and OrientDB but these numbers can only be accessed in Titan practically.
 
