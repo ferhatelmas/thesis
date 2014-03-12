@@ -138,14 +138,7 @@
 
 %: ----------------------- abstract ------------------------
 
-% Your institution may have specific regulations if you need an abstract and where it is to be placed in the document. The default here is just after title.
-
 \include{frontmatter/abstract}
-
-% The original template provides and abstractseparate environment, if your institution requires them to be separate. I think it's easier to print the abstract from the complete report by restricting printing to the relevant page.
-% \begin{abstractseparate}
-%    \input{Abstract/abstract}
-% \end{abstractseparate}
 
 \frontmatter
 
@@ -154,22 +147,12 @@
 \setcounter{secnumdepth}{3} % organisational level that receives a numbers
 \setcounter{tocdepth}{3}    % print table of contents for level 3
 \tableofcontents            % print the table of contents
-% levels are: 0 - chapter, 1 - section, 2 - subsection, 3 - subsection
 
-%: --------------------------------------------------------------
-%:                  MAIN DOCUMENT SECTION
-% --------------------------------------------------------------
-
-% the main text starts here with the introduction, 1st section,...
 \mainmatter
 
 \renewcommand{\chaptername}{} % do not change
 
-
 %: ----------------------- subdocuments ------------------------
-
-% Parts of the report are included below. Rename the files as required.
-% But take care that the paths match. You can also change the order of appearance by moving the include commands.
 
 \include{1/section1}	  
 \include{2/section2}					
@@ -184,24 +167,15 @@
 %:                  BACK MATTER: appendices, refs,..
 % --------------------------------------------------------------
 
-% the back matter: appendix and references close the thesis
-
 
 %: ----------------------- bibliography ------------------------
-
-% The section below defines how references are listed and formatted
-% The default below is 2 columns, small font, complete author names.
-% Entries are also linked back to the page number in the text and to external URL if provided in the BibTex file.
 
 % PhDbiblio-url2 = names small caps, title bold & hyperlinked, link to page 
 %\begin{multicols}{2} % \begin{multicols}{ # columns}[ header text][ space]
 \begin{tiny} % tiny(5) < scriptsize(7) < footnotesize(8) < small (9)
-
-\bibliographystyle{Latex/Classes/PhDbiblio-url2} % Title is link if provided
-\renewcommand{\bibname}{References} % changes the header; default: Bibliography
-   
-\bibliography{backmatter/references} % adjust this to fit your BibTex file
-
+  \bibliographystyle{Latex/Classes/PhDbiblio-url2} % Title is link if provided
+  \renewcommand{\bibname}{References} % changes the header; default: Bibliography
+  \bibliography{backmatter/references} % adjust this to fit your BibTex file
 \end{tiny}
 %\end{multicols}  
 
@@ -222,15 +196,7 @@
 % in-text refs: author (year) without brackets
 % (this works with package natbib)
 
-
 % --------------------------------------------------------------
 
-% according to Dresden med fac summary has to be at the end
-%\include{0_frontmatter/abstract}
-
-%: Declaration of originality
-%\include{9_backmatter/declaration}
-
-
-
+\include{backmatter/declaration}
 \end{document}
