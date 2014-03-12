@@ -781,7 +781,7 @@ There are a lot of graph databases but there are a few in active development; na
 \begin{table}[!ht]
   \centering
   \caption{OrientDB Graph Database}
-  \renewcommand{\arraystretch}{1.5}% Spread rows out...
+  \renewcommand{\arraystretch}{1.5}
   \begin{tabular}{| >{\centering\bfseries}m{1in} | >{\centering\arraybackslash}m{4.5in} |}
 	\hline
     \textbf{Criteria} & \textbf{Feature} \\
@@ -814,17 +814,10 @@ There are a lot of graph databases but there are a few in active development; na
 
 \subsection{Neo4j}
 
-% TODO: EXTEND NEO4J
-%Pros:
-%ACID
-%High availability
-%Most mature
-%Biggest community and market leader (Cisco, Deutsche Telekom, HP, Huawei)
-%Best search via external Lucene index
-%Cons:
-%Speed
-%Less flexible properties compared to document nodes in OrientDB (cumbersome working with complex data)
-%Dual license
+Neo4j is the most popular and mature graph database which is deployed at Cisco, HP, Huawei, etc.
+Neo4j adapts dual license, community and enterprise. There are huge differences between them in terms of scalability. Enterprise is fully ready for horizontal scalability with default cache, auto-sharding, master-slave replication where none of them available in community edition. Documentation and resources are plentiful compared other graph databases but lacking features between different versions risks accessibility.
+
+Both versions support ACID transactions and leverage Lucene for fast searching. OrientDB supports documents everywhere so as to vertexes and edges can theoretically be annotated as it's requested. Neo4j delegates it with integrating Lucene. Since OrientDB does itself, it is faster but being an important Apache project, Lucene has much much faster development.
 
 \begin{table}[!ht]
   \centering
@@ -838,7 +831,7 @@ There are a lot of graph databases but there are a few in active development; na
     Neo4j is licensed under GPL and AGPL (for enterprise) and it is by far the most stable graph database in the market.
     \\ \hline
     Scalability &
-    Scalability is lacking because horizontal scaling of a graph is really difficult due to relationships in a tightly connected graph.
+    Scalability is lacking because horizontal scaling of a graph is really difficult due to relationships in a tightly connected graph. Neo4j Clustering technology provides horizontal scalability but only for enterprise version.
     \\ \hline
     Ease of Use Development &
     Some parts of Indico such as roles of users in events, links between conferences, sessions and contributions, etc. perfectly match links in a graph but not everything is mappable.
@@ -861,18 +854,9 @@ There are a lot of graph databases but there are a few in active development; na
 
 \subsection{Titan}
 
-% TODO: EXTEND TITAN
-%Pros:
+Titan is a graph database that targets scalability with supporting scalable NoSQL databases. Graphs are connected so dividing graph into multiple nodes is extremely difficult without data-aware solutions. Thus, main scalability idea is to replicate the graph into multiple nodes via master-slave or multi-master scheme but this prevents scaling beyond capabilities of weakest node. While in terms of query latency, this solution can provide reasonably good performance as Neo4j and OrientDB. While two unrelated points which are very far from each other are being updated, synchronization and locking are unnecessary. This is main problem Titan is trying to solve at the expense of losing ACID transactions. Moreover, scalability is more than throughput such that databases replicates whole graph in every node miserably fail scaling graphs in size. There are theoretical limits like 2 billion vertexes in Neo4j and OrientDB but these numbers can only be accessed in Titan practically.
 
-%ACID, vertex consistent or eventually consistent (according to storage)
-%Multiple backends (Cassandra, HBase, BerkeleyDB)
-%High availability and scability (standing on shoulders of giants)
-%Native TinkerPop stack
-%Search (Elastic or Lucene)
-%Cons:
-
-%Complexity of another storage
-%Gaining popularity but small user base (Cisco, Pearson)
+In short, its architecture addresses an important problem which, in turn, draws attention of many users but it's still not widely used. Furthermore, the schema of Indico isn't mappable into a graph and while we are already trying to be away from column-oriented stores due to complexity, Titan even increases it.
 
 \begin{table}[!ht]
   \centering
@@ -885,7 +869,7 @@ There are a lot of graph databases but there are a few in active development; na
     Availability &
     Apache License 2.0 \\ \hline
     Scalability &
-    Titan has a notably different architecture compared to other graph databases via pluggable storage back-ends where scalable back-ends such as HBase or Cassandra brings scalable nature into Titan.
+    Titan has a notably different architecture compared to other graph databases via pluggable storage back-ends where scalable back-ends such as HBase or Cassandra brings their scalable nature into Titan.
     \\ \hline
     Ease of Use Development &
     Python is officially supported in binary protocol but while pluggable storage engine, which itself isn't easy to use, is bringing scalability, it also makes the system much more complex compared to OrientDB or Neo4j due to many moving parts.
@@ -894,10 +878,10 @@ There are a lot of graph databases but there are a few in active development; na
     ACID and eventual consistency are possible but it mainly depends on the back-end characteristics.
     \\ \hline
     Community Momentum &
-    Graph databases are on the rise and data is getting bigger and bigger. Other graph databases can't divide their data but Titan can divide by following a different path. Thus, Titan can scale to the numbers OrientDB and Neo4j can't. If GitHub popularity of graph databases is ranked (all three are hosted on GitHub), then Titan seems to be the most popular one.
+    Graph databases are on the rise and data is getting bigger and bigger. Other graph databases can't divide their data but Titan can divide by following a different path. Thus, Titan can scale to the numbers OrientDB and Neo4j can't in terms of graph vertex and edge sizes. If GitHub popularity of graph databases is ranked (quite rational since all three are hosted on GitHub), then Titan seems to be the most popular one. However, this may be misleading because this popularity may be a result of popularity of pluggable storages.
     \\ \hline
     Cost \\ Exit Strategy &
-	Start phase to use Titan may be probably difficult since required storage engine. Exit is easier comparably since Titan is also 100\% compliant with TinkerPop stack. If application is using TinkerPop stack, when graph databases is changed, there is nothing to be changed from the application point of view.
+	Start phase to use Titan may be probably difficult since required storage engine. Exit is comparably easier since Titan is also 100\% compliant with TinkerPop stack. If application is using TinkerPop stack, when graph database is changed, there is nothing to be changed from the application point of view.
     \\ \hline
     Score & \rpt[4]{\FiveStar}\rpt[2]{\FiveStarOpen} \\
     \hline
