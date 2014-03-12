@@ -277,7 +277,11 @@ It's self-contained, server-less (no daemon for waiting client connections), zer
   \label{sqlite}
 \end{table}
 
-\section{Column Oriented Databases}
+\section{Column Family Databases}
+
+Column-family databases are designed to handle large amount of data across many commodity servers at the scale of Facebook. They provide auto-sharding and master-master replication so as to provide low latency and no single point of failure at the expense of dropping joins (favoring denormalization) and ACID guarantees. Column-family databases differentiate their records via row id as RDBMS, timestamp for conflict resolution and/or versioning, column-family and column name. Column-family is a container for columns and columns can be added and deleted whenever needed without any down time. Moreover, every row doesn't need to have same columns as RDBMS rows.
+
+There are also column-oriented relational database. They see data in terms of columns instead of rows because they physically store all data of one column together. Therefore, they are better in data-warehousing and customer relationship management (CRM). Except this design difference, their features are more or less same well-known row-oriented RDBMSs. Commercial product, Microsoft SQL Server supports both storage design, for instance. Vocabulary is similar but they are very different designs.
 
 \subsection{Cassandra}
 
