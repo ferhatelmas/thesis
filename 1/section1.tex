@@ -1,52 +1,63 @@
-
-% this file is called up by thesis.tex
-% content in this file will be fed into the main document
-
-%: ----------------------- introduction file header -----------------------
 \chapter{Introduction}
 
-% the code below specifies where the figures are stored
-\ifpdf
-    \graphicspath{{1_introduction/figures/PNG/}{1_introduction/figures/PDF/}{1_introduction/figures/}}
-\else
-    \graphicspath{{1_introduction/figures/EPS/}{1_introduction/figures/}}
-\fi
+\section{Overview - What is Indico?}
 
-\section{Overview - What is Indico?} % section headings are printed smaller than chapter names
+Indico (Integrated Digital Conferencing) is a web application for event management, initially developed as a joint initiative of \textsc{CERN}\footnote{\href{http://home.web.cern.ch/}{The European Organization for Nuclear Research}}, \textsc{SISSA}\footnote{\href{https://www.sissa.it/}{International School for Advanced Studies}}, University of Udine\footnote{http://www.uniud.it/}, \textsc{TNO}\footnote{\href{https://www.tno.nl/}{Nederlandse Organisatie voor Toegepast Natuurwetenschappelijk Onderzoek}}, and University of Amsterdam\footnote{\url{http://www.uva.nl/en/home}}. Currently, most development is happening at CERN with occasional contributions from the outside, such as time zone support by Fermilab\footnote{\url{https://www.fnal.gov/}}.
 
-Indico (Integrated Digital Conferencing) is a web application for event management, initially developed by a joint initiative of CERN, SISSA, University of Udine, Nederlandse Organisatie voor Toegepast Natuurwetenschappelijk Onderzoek (TNO), and University of Amsterdam. Currently, main development is going on at CERN with occasional contributions from outside such as time zone support by Fermi Lab.
+\par Indico events are divided into 3 types: lecture, meeting and conference as from simplest to the most complex, respectively. Lectures are one time talks while conferences provide a wider range of features.
 
-\par Indico events are divided into 3 types: lecture, meeting and conference as from simplest to the most complex, respectively. Lectures are one time talks but conferences provide all nice features of Indico.
+\par In addition to events having a type, each event belongs to a specific category, which enables category-driven navigation between events. However, active categories can contain many events in which finding events may be cusbersome so time-driven (day/week/month) view is combined with category view for a more powerful navigation. Sometimes time-driven navigation isn't enough, as any user, extensively uses Indico, can easily end up with tens of events in a daily view. To remedy this problem, personal dashboard was developed in which upcoming events are shown in sorted order to the user. Moreover, users can mark some categories as their favorites and Indico recommends categories to users by analyzing this information and the event history of users.
 
-\par In addition to events having a type, each event belongs to one category which enable category-driven navigation between events. Since finding interested event in possibly huge number of categories, time-driven (day/week/month) view is also supported. Even time-driven navigation isn't enough because a user, extensively uses Indico, can easily see tens of events in a daily view. To remedy this problem, personal dashboard is being developed in which approaching events are shown in sorted order for the user. Moreover, users can mark some categories as their favorites and Indico recommends categories to users by analyzing this information and the event history of users.
+\par Indico has a huge number of features and some important ones:
+\begin{itemize}
+  \item Customization of the event's website.
+  \item Easily setting up access and modification rights: Every part of conference management requires different access rights. One contributor should be able to modify her contribution but she shouldn't be able to change others, for instance.
+  \item A powerful fully customizable WYSIWYG registration form for events
+  \item Custom forms such as preparing a survey to get feedback about event.
+  \item Call for abstracts
+  \item Paper reviewing
+  \item Rich text editing in Latex and Markdown
+  \item Archiving files: pictures, slides, videos, etc. It's a document store as much as it's a meta-data store.
+  \item Converting documents between different formats via an external conversion server such as automatically generating PDF from Microsoft Office slides.
+  \item Exporting event meta-data in multiple formats: HTML, XML, iCal, PDF, etc.
+  \item Extensible plug-in system to provide more advanced features and to integrate with other systems. Some widely-used plug-ins:
+  \begin{itemize}
+    \item A powerful Room Booking system which enables management and reservation of rooms in a large organization
+    \item Powerful video conferencing by integration with Vidyo\footnote{\url{http://www.vidyo.com/}} and EVO \footnote{\url{http://evo.caltech.edu/}}
+    \item Using instant messaging, XMPP, is easy from Indico
+    \item Payment processing for registration using different providers (PayPal, PostFinance, WorldPay, etc.)
+    \item Search for categories and events via Invenio\footnote{\href{https://invenio-software.org/}{Invenio}, also developed at \textsc{CERN}, is a digital management library by providing classification, indexing and curation of documents} integration
+  \end{itemize}
+  \item Fully embracing mobile with mobile version and mobile check-in application for events
+\end{itemize}
 
-\par Indico manages full conference cycle starting with customization of website. Every part of conference management requires different access rights. One contributor should be able to modify her contribution but she shouldn't be able to others, for instance. Indico makes setup of access and modification rights easy. Conferences are nothing without registrants and Indico provides a powerful fully customizable wysiwyg registration form. Indico supports creating custom forms in addition to registration form such as to prepare a survey. Call for abstracts, rich text editing in Latex and Markdown, and paper reviewing are enabled by Indico. Indico is a document store as much as being metadata store but saving different kinds of files; pictures, slides, videos, etc. Indico is even capable of converting documents betweeen different formats such as automatic PDF generation from Microsoft Office slides. Everybody has her different flow and tools to manage her calendar. Indico allows different views of same event and exporting events in multiple formats such as HTML, XML, iCal, PDF, etc. Last but not least, Indico is extensible via plug-ins to integrate with other systems or to provide more localised services so that only Indico is sufficient for everything. Room booking to arrange event place or Vidyo for video conference may be given as examples of notable plug-ins.
-
-\par Extensible architecture of Indico have enabled easy integration with different services. As time advanced, search engine (Invenio) is added to find catgories and events easily. Indico totally embraces mobile and recently mobile check-in application is developed. Video conference (Vidyo and EVO) and instant messaging (XMPP) are easy to use within Indico. Payment processing for registrations in different ways (PayPal, PostFinance, WorldPay, etc.) is possible. Location, room and booking management are made possible with a clear interface for places and schedule of events. As a result, Indico is absorbing new feature sets by integrating with other services and steadily advancing to become the de facto interface for most of the needs.
+As seen, Indico is absorbing new feature sets by integrating with other services and steadily advancing to become the de facto interface for most of the needs in terms of event organization and management.
 
 \section{Motivation - Why change?}
 
-\par Main driving force in development of Indico was a required service to manage events as following agenda of CDS, CERN Document Server. Thus, rapid development of production ready software was a necessity. Since there were many features to be implemented, time spent in other parts of the system must have been minimized.
+\par The main driving force in development of Indico was the need for a service to manage events, a successor of CERN's own CDS\footnote{\href{http://cds.cern.ch/?ln=en}{CERN Document Server}}. Thus, rapid development of production ready software was a necessity. Since there were many features to be implemented, time spent in other parts of the system had to be minimized.
 
-\par The beginning of 2000s was the time objects and object oriented programming languages have become mainstream. As a result, there was an opportunist storm to try objects in everywhere and data stores had their own lion's share. Thus, an object database as a back-end for web application was a meaningful decision at that time. However, object databases never took off.
+\par The beginning of the 2000s was the time objects and object oriented programming languages became mainstream. As a result, there was a tendency to try objects everywhere and data stores had their own lion's share. Thus, an object database as a back-end for web application was a reasonable decision at that time. However, object databases never took off as general-purpose solutions.
 
-\par ZODB (Zope Object Database) was a viewable option in 2002 for Python, main programming language of Indico. Since ZODB is an object database, it enables directly manipulating and transparently storing objects. This capability of data store eliminates a layer between objects in programming language and data in store which in turn, saves a lot of time, money and complexity in application.
+\par \textsc{ZODB} (Zope Object Database) was a viable option for Python in 2002. Since \textsc{ZODB} is an object database, it enables direct manipulation and transparently storage of objects. This capability of certain data stores eliminates a layer between objects in the programming language and data in store which in turn saves a lot of time, money and complexity in development.
 
-\par Fast forward to 2014, ZODB is far from having medium sized community. What is saved before by using ZODB is now being paid to solve limitations of ZODB. Finally, net gain turned into negative which signified to replace ZODB with more mainstream, powerful and scalable data store which will support next decade of Indico.
+\par Fast forward to 2014, \textsc{ZODB} is far from having a medium sized community. What was saved before by using \textsc{ZODB} is now being paid to work around its own limitations. In the last couple of years, the net gain turned out to be negative which meant replacing \textsc{ZODB} with a more standard, powerful and scalable data store which will be the basis for new developments in the next decade of life of the tool.
 
-\section{Approach - How change?}
+\section{Approach - How to change?}
 
-\par Firstly, limitations of ZODB should be extensively studied because most of the time, leaving aging production system behind and writing it from scratch results in failure. It's developed for more than 10 years, leaving ZODB means discarding this accumulated knowledge. Moreover, unless problems are made ridiculously clear, clean solutions can't be found.
+\par We are sure about the necessity of the change but change is costly and getting costlier every day because more feature are being developed, more systems are being integrated and scale is increasing. Thus, a wrong decision taken today may even kill the development of the tool so it should be well-planned: past mistakes should be analysed to prevent them happening again and emerging technologies should be examined to utilize.
 
-\par We will present these reasons and the ways how we tried to solve these limitations in existing system. After we become certain about that refactoring would be more cost-effective, next step is to define criterias for the replacement technology in terms of where ZODB has failed and also keeping the future of Indico in mind. 
+\par Firstly, limitations of \textsc{ZODB} should be extensively studied because most of the time, leaving aging production system behind and writing it from scratch results in failure \cite{rewrite-cost}\cite{rewrite-cost-2}. It's developed for more than 10 years, there is a huge body of accumulated expertise with working \textsc{ZODB}. As a result, many work around solutions are developed and which should be studied to make clear where it failed. Unless problems are made ridiculously clear, clean solutions can't be found\cite{pracprog}.
 
-\par In the golden era of data store, started by Google and Amazon to implement their extreme requirements, there are zillions of candidates, even barely knowing each of them is a really difficult task. Goal is to collect and classify candidates that conform to criterias as much as possible.
+\par We will present these reasons and how we tried to solve these limitations as in the existing system and technologies. After becoming certain that refactoring would be more cost-effective instead of pushing \textsc{ZODB} more and more, next step is to define features, that new data layer should be capable of. We have mainly used two things: where \textsc{ZODB} failed and interpolation of the growth.
 
-\par After first elimination and classification, next round is to get familiar with each one via implementing a very small subset of Indico. Implementation is important because making sense of abstract concepts is difficult to interpolate expectations. Even if feature implemented is small, it makes easier to predict the schedule and complexity.
+\par In the golden era of data stores, started by Google\cite{bigtable}\cite{chubby}\cite{mapreduce} and Amazon\cite{dynamo} who needed to implement their own systems with extreme requirements; there are zillions of candidates, and even barely knowing each of them is a really difficult task. The goal is to collect and classify candidates that conform to criteria as much as possible.
 
-\par When know-how of each system is acquired, tipping point is choosing one or subset of candidates because,  in big applications, each part has different characteristics and requirements which maps into suboptimal solutions by using only one data store.
+\par After a first elimination and classification, the next step is to get familiar with each one via implementing a very small subset of Indico. Implementation is important because it is hard to estimate from abstract concepts alone. Even if the feature to be implemented is small, it makes it easier to predict the schedule and complexity.
 
-\par In either case, transition phase is long and painful so it should be well-planned in terms of bugs, needs of community and release cycle. When schedule is carefully studied, the final bit is to implement the system conforming to the plan.
+\par When know-how about each system is acquired, the tipping point is choosing one or a subset of the candidates because, in big applications, each part has different characteristics and requirements which entail suboptimal solutions when using only one data store.
+
+\par In either case, the transition phase is long and painful so it should be well-planned in terms of bugs should be fixed immediately, needs of the community and release cycle. Indico is an open source project and there is a vibrant community engaging worldwide. Thus, unlike a closed-source product, decisions can't be given only by \textsc{CERN}, the final decision maker, though. Once the schedule is carefully studied, the final bit is to implement the system conforming to the plan.
 
 \section{Outline - What is Done and Next?}
 
