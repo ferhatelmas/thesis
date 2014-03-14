@@ -118,9 +118,9 @@ There is a subtle "nuance" in all of this because \textit{db} object must be cre
 
 In ZODB, accessing objects and their properties are easy but inefficient. Even if a small property of an object is needed, we need to load whole object and then access its property. There is no possibility of doing projections. As said in discussion of database types, object is seen a big blob from the point of view of database.
 
-Even worse, since we can't load object in batches in ZODB, there must be multiple back and forth connections between server and client. In terms of performance, this connection should be minimized into one.
+Even worse, since we can't load object in batches in ZODB, there must be multiple back and forth connections between server and client. In terms of performance, this communication should be minimized into one.
 
-Relational databases helps us to overcome these problems at the expense of an increase query complexity and portability between different databases.
+Relational databases help us to overcome these problems at the expense of an increase in query complexity and a decrease in portability between different databases.
 
 \subsection{Complexity}
 
@@ -134,7 +134,7 @@ For example, to show booking interface to user, rooms and their capacity are nee
   \item Getting all rooms and max capacity at the same time from server
 \end{itemize}
 
-First option is easier but not efficient as much as it could be. Second option is blazingly fast since database has already an index on capacity such that there is no need for computation, it's only one look-up. However, retrieving rooms and one integer in the same result is hard because each record should have same structure which is \textit{not}. To get all into same structure, max capacity should be faked into a room object. 
+The first option is easier but not efficient as much as it could be. The second option is blazingly fast since database has already an index on capacity such that there is no need for computation, it's only one look-up. However, retrieving rooms and one integer in the same result is hard because each record should have same structure which is \textit{not}. To get all into same structure, max capacity should be faked into a room object. 
 
 Another example may be showing availabilities of rooms in some time span because a tree-like structure should be retrieved from server in one go such that there may be multiple rooms with multiple reservations within one day. Since it's favourable to return one record for each day, rooms and their reservations must be aggregated somehow. However, this aggregation isn't a simple SQL function like \textit{min} and it's more similar to concatenating records. Making this aggregation without powerful types supported by database such as \textit{array} in \textit{PostgreSQL} to keep queries portable loses type information.
 
@@ -142,9 +142,9 @@ As in examples, there is a trade-off between performance and complexity. As it g
 
 \subsection{Portability}
 
-Making queries better in terms of performance requires us to optimize for one database. This breaks portability because some aggregation function supported in PostgreSQL isn't available in MySQL, for instance. Using SQLAlchemy abstracts database but if specific extensions and types are utilized, then it's hard plug and play a different database. Likely, SQLAlchemy is extensible and provides a compiler to be extended.
+Making queries better in terms of performance requires us to optimize for one database. This breaks portability because some aggregation function supported in PostgreSQL isn't available in MySQL, for instance. Using SQLAlchemy abstracts database but if specific extensions and types are utilized, then it's hard to plug and play a different database. Likely, SQLAlchemy is extensible and provides a compiler to be extended.
 
-For example, we would like to aggregate one column into an array in PostgreSQL with \textit{array\textunderscore agg} method. However, this method isn't available in MySQL so it'll cause an error. Compiler provided by SQLAlchemy generates custom SQL for each database. If we write an \textit{array\textunderscore agg} compiler construct and we can supply with information to call default \textit{array\textunderscore agg} on PostgreSQL and do custom string concatenation on MySQL to get the similar result.
+For example, we would like to aggregate one column into an array in PostgreSQL with \textit{array\_agg} method. However, this method isn't available in MySQL so it'll cause an error. Compiler provided by SQLAlchemy generates custom SQL for each database. If we write an \textit{array\_agg} compiler construct and we can supply with information to call default \textit{array\_agg} on PostgreSQL and do custom string concatenation on MySQL to get the similar result.
 
 Main goal is to prevent ourselves from using specific methods and types as much as possible and when it's not possible, one compiler construct for respective method is provided. Even if we try not to diverge from common features, queries are optimized for PostgreSQL since it'll be production environment at the end.
 
@@ -152,7 +152,7 @@ Main goal is to prevent ourselves from using specific methods and types as much 
 
 A complex system is getting more complex by entering into a transition phase in which many libraries are being integrated. Thus, unit tests are required to validate that same functionality as refactoring has been kept. Flask and its ecosystem are being more utilized in Indico so we chose using \textit{Flask-Testing} to write unit tests.
 
-\textit{Flask-Testing} automatically populates and drops database for each to decrease coupling between tests. Due to the usage of \textit{Flask-SQLAlchemy}, we should be in \textit{app\textunderscore context} or \textit{test\textunderscore request\textunderscore context} which mean that application must be set for \textit{db} object or one request should be qoing on, respectively. \textit{Flask-SQLAlchemy} provides \textit{test\textunderscore request\textunderscore context}, creation and dropping of \textit{session} for us.
+\textit{Flask-Testing} automatically populates and drops database for each test case to decrease coupling between tests. Due to the usage of \textit{Flask-SQLAlchemy}, we should be in \textit{app\_context} or \textit{test\_request\_context} which mean that application must be set for \textit{db} object or one request should be qoing on, respectively. \textit{Flask-SQLAlchemy} provides \textit{test\_request\_context}, creation and dropping of \textit{session} for us.
 
 \section{Controllers}
 
@@ -183,18 +183,18 @@ With this structure, navigation within code base is faster and since related fun
 
 \subsection{Forms}
 
-Most complexity of controllers code comes from validation of form fields. No form library is utilized and validation of each field manually which is repetitive and error-prone. Since huge body of controllers is changing, field validation may also be off-loaded to 3rd party form library.
+Most complexity of controllers code comes from validation of form fields. No form library is utilized and validation of each field is done manually which is repetitive and error-prone. Since huge body of controllers is changing, field validation may also be off-loaded to 3rd party form library.
 
 The most popular and stable library for forms is \textit{WTForms} and we used it with Flask and SQLAlchemy extensions to automate validation.
 
 Request handlers in Indico has mainly 3 important methods:
 \begin{itemize}
-  \item authorization check: put into package base nicely
+  \item authorization check: it is put into modularized package base nicely (\texttt{indico.modules.rb.controllers})
   \item parameter check: used to create a respective form object and validate
   \item process: generates response by using validated form data
 \end{itemize}
 
-Controllers are light-weight because nice package structure enabled to get authorization check out of picture. Process is implemented as one query in appropriate model. Now, with integration of WTForms, parameter check is delegated. As a result of these transformations, controllers composed of hundreds lines of code is now a simple glue between models and forms.
+Controllers has become light-weight because nice package structure enabled to get authorization check out of picture. Process is implemented as one query in appropriate model. Now, with integration of WTForms, parameter check is delegated. As a result of these transformations, controllers composed of hundreds lines of code is now a simple glue between models and forms.
 
 WTForms provides:
 \begin{itemize}
@@ -219,17 +219,17 @@ Flask is integrated into Indico because
 
 Even if Flask could bring above features, it's just a facade between WSGI and Indico custom request handler logic because it's only used for URL mapping. For instance, request handlers get their request data as parameters from base request handler by copying. This is unnecessary since request handlers are already able to access request data from \textit{flask.request}. While base request handler is being refactored for distributed queries, it's also updated to pass request data conditionally so that new request handlers have a simpler signatures and access their data from \textit{flask.request} while keeping compatibility with old ones.
 
-Parameters are passed back and forth to notify users for action success or fail. Interface shows respective message according to action status. However, in refresh, since parameters are a part of URL, same message will be displayed again which is misleading and ugly. Therefore, new request handlers use \textit{flask.flash} to show messages only one and getting rid of parameter navigation clutter.
+Parameters are passed back and forth to notify users for action success or fail. Interface shows respective message according to action status. However, in refresh, since parameters are a part of URL, same message will be displayed again which is misleading and ugly. Therefore, new request handlers use \textit{flask.flash} to show messages only once and getting rid of parameter navigation clutter.
 
 \section{Views and Templates}
 
-The same structure of controllers is replicated under views. That enables easy navigation and more understandable code base such that if there is a request handler in \textit{indico.modules.rb.controllers.x.y.z}, its respective view is simply in \textit{indico.modules.rb.views.x.y.z}.
+The same structure of controllers is replicated under views. That enables easy navigation and more understandable code base such that if there is a request handler in $$\texttt{indico.modules.rb.controllers.x.y.z}$$, its respective view is simply in $$\texttt{indico.modules.rb.views.x.y.z}$$.
 
-Templates are mainly updated to keep consistency and naming scheme. However, in some interface, there were legacy inefficient JavaScript and old widgets that may be better to change for consistent user interface. Pure JavaScript is mostly rewritten in \textit{underscore.js} to offload browser quirks to library and have a modern, concise code since it's already in use. Old widgets are replaced by jQuery UI widgets such as \textit{DatePicker}.
+Templates are mainly updated to keep consistency and naming scheme. However, in some interface, there were legacy inefficient JavaScript and old widgets that may be better to change for consistent user interface. Pure JavaScript is mostly rewritten in \textit{underscore.js}\footnote{\url{http://underscorejs.org/}} to offload browser quirks to library and have a modern, concise code since it's already in use. Old widgets are replaced by jQuery UI widgets such as \textit{DatePicker}\footnote{\url{http://jqueryui.com/datepicker/}}.
 
 \subsection{Unicode}
 
-Mako template engine (developed by main SQLAlchemy developer) is in production at Indico and Mako provides an option to disable Unicode explicitly. Until now, fields are Python byte strings and internationalization engine returns UTF-8 encoded strings so currently templates don't support unicode objects. Using deeply Flask and SQLAlchemy makes transition to Python 3 faster by using unicode objects everywhere but until that time, refactored modules, room booking for now, differs from rest. Location, room or reservation objects can't be passed directly templates. Their properties must be converted into byte string by encoding before generating result.
+Mako\footnote{\url{http://www.makotemplates.org/}} template engine (developed by main SQLAlchemy developer) is in production at Indico and Mako provides an option to disable Unicode explicitly. Until now, fields are Python byte strings and internationalization engine returns UTF-8 encoded strings so currently templates don't support unicode objects. Using deeply Flask and SQLAlchemy makes transition to Python 3 faster by using unicode objects everywhere but until that time, refactored modules, room booking for now, differs from rest. Location, room or reservation objects can't be passed directly to the templates. Their properties must be converted into byte string by encoding before generating result.
 
 This problem can be solved in two ways:
 \begin{itemize}
@@ -239,4 +239,4 @@ This problem can be solved in two ways:
 
 First one is verbose and error-prone so second one is chosen not to bother developers with a bad result of transition phase. Second implementation is worse in terms of performance but pros and cons are compared, it weighs heavier such that a new developer that isn't informed about this quirk may not be aware of it.
 
-In overall, ZODB version wasn't supporting Python 3 so getting rid of main dependency of Indico and tight integration of Flask, WTForms and SQLAlchemy are a huge push for the adaptation of Python 3 in Indico.
+In overall, ZODB version wasn't supporting Python 3 so getting rid of main dependency of Indico and tight integration of Flask, WTForms and SQLAlchemy is a huge push for the adaptation of Python 3 in Indico.

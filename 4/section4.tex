@@ -64,19 +64,7 @@ In this section, we recreate dashboard example, which is used to explain limitat
 
 \subsubsection*{Conclusion}
 
-± Plus vs Minus ±
-
-Pros:
-
-Very stable and huge community (business, cost, docs)
-Important successful deployments
-Huge list of features and customizable
-ACID but fast
-Security and data protection
-Cons:
-
-Strict schema (new features?)
-Joins (complex data retrieval via SQL)
+PostgreSQL excels in this dashboard example while ZODB was failing miserably. Even if there is a need for strict schema, it's not a problem since this relationship is barely changing. The only concerning point is the necessity of a join when data from two tables is requested.
 
 \section{Column Oriented-Databases}
 
@@ -120,12 +108,13 @@ Joins (complex data retrieval via SQL)
   \label{hbase-events}
 \end{table}
 
+We have tried to create the best possible schema as in tables \ref{hbase-users} and \ref{hbase-events}. There intrinsically is a relationship between users and events. Even if the data is small, it's a good example in order to show the difficulty of mapping relationships. Events can be de-normalized into users but Indico's schema contains chain of relationships with 4-5 levels where de-normalization doesn't scale.
 
 \section{Document Oriented-Databases}
 
 \subsection{MongoDB}
 
-\begin{lstlisting}[language=HTML]
+\begin{lstlisting}[language=HTML, caption=Example Dashboard in MongoDB]
   Collection 'users':
     [
       {
@@ -168,28 +157,9 @@ Joins (complex data retrieval via SQL)
 
 \subsubsection*{Conclusion}
 
-Pros:
-Good documentation, big community and successful examples (Sourceforge, eBay, Forbes, CERN)
-Javascript and JSON are first class citizens
-Replication (auto-failover with replica sets) and sharding (built-in)
-In-place updates
-Built by most valuable open source startup
-Aggregation Framework and Map-Reduce
-Cons:
+Event modification isn't uncommon task in Indico. If events are embedded into users collections, then in every change, users collection must be queried frequently, \textit{O(N)} at worst case. On the other hand, if events are put into a separate collection, then each modification can be handled in \textit{O(logN)}. That's why events should be in another collection while users are keeping references to events.
 
-Lack of transactions
-Unsafe writes by design (data loss possibility unless be sure of propagation)
-Not fast comparable to expectations, even if constraints are loosened to gain speed
-Memory constraints (document size, working set, etc.)
-Possible Use-Cases:
-
-User-account details management:
-Requires medium heavy of read and writes
-Required
-Conference details management:
-Much more read than write
-Installation management:
-Tracking indico installations needs flexible schema, since tracked properties may change frequently by new versions
+When data is divided into collections, writes involving both collections become problematic due to lack of ACID transactions. There are many relations that are more complex in Indico's schema compared to this simple example. Therefore, it seems not to be a good fit for write flow but with B-Tree indexes and ad-hoc query capability, pretty much every read query written in PostgreSQL is achievable. As a result, it makes sense to use it as a flexible cache when entities couldn't be embedded in another.
 
 \section{Key-Value Store}
 
@@ -197,16 +167,16 @@ Tracking indico installations needs flexible schema, since tracked properties ma
 
 The \textit{Redis schema} (if fair to say) that was used for our implementation of the dashboard feature was the following:
 
-\begin{lstlisting}
+\begin{lstlisting}[caption=Dashboard Schema in Redis]
   avatar_event_roles: (<AVATAR_ID>, <EVENT_ID>) -> SET(ROLE)
   event_avatars: <EVENT_ID> -> SET(AVATAR)
   avatar_events: <AVATAR_ID> -> SORTED_SET(EVENT_TS -> EVENT_ID)
 \end{lstlisting}
 
-The first namespace establishes a link between an avatar and an event, much like named edges of a graph. The second one ($event_avatars$) maps a particular event to a set of avatars (so that we can have a quick list of all the people involved in a specific event), while $avatar_events$ does the opposite (maps an avatar to all the events it's connected to) with a little twist: events will be ordered by timestamp. This makes it easier to retrieve an ordered list of events relative to a particular user.
+The first namespace establishes a link between an avatar and an event, much like named edges of a graph. The second one (\texttt{event\_avatars}) maps a particular event to a set of avatars (so that we can have a quick list of all the people involved in a specific event), while \texttt{avatar\_events} does the opposite (maps an avatar to all the events it's connected to) with a little twist: events will be ordered by timestamp. This makes it easier to retrieve an ordered list of events relative to a particular user.
 
 Here is the representation of the example Dashboard we've shown before using this schema:
-\begin{lstlisting}
+\begin{lstlisting}[caption=Example Dashboard Data in Redis]
   avatar_event_roles: (user_1, event_1) -> attendee
                       (user_1, event_2) -> manager
                       (user_1, event_3) -> reviewer, attendee
@@ -226,20 +196,20 @@ There are a series of operations that need to be executed over this "schema":
 
 \begin{itemize}
   \item \textbf{Adding a new role} (involves all the three namespaces)
-  \item \textbf{Getting all the events in a specific time interval}, with the respective role information (involves $avatar_events$ and $avatar_event_roles$)
+  \item \textbf{Getting all the events in a specific time interval}, with the respective role information (involves \texttt{avatar\_events} and \texttt{avatar\_event\_roles})
   \item \textbf{Deleting an event} (involves all three namespaces)
   \item \textbf{Deleting an avatar} (involves all three namespaces)
   \item \textbf{Deleting a role link} (involves all three namespaces)
-  \item \textbf{Updating event time} (involves $event_avatars$ and $avatar_events$)
+  \item \textbf{Updating event time} (involves \texttt{event\_avatars} and \texttt{avatar\_events})
   \item \textbf{Merging avatars} (involves all three namespaces)
 \end{itemize}
 In this particular implementation, most of the work is done client-side, using LUA scripts (similar to \textit{stored procedures}). This really speeds up query times, but has the inconvenience of locking the server, thus not allowing anything else to run in parallel. This can be problematic in the case of slow scripts.
 
-The operations shown above have quite reasonable time complexity boundaries: Redis guarantees at least linear time in almost all operations, and most hash-related operations are logarithmic. \textit{Set} and \textit{get} of single values tend to be executed in constant time. A possible \textit{worst-case scenario} could be \textit{deleting an event} when all users are connected to all events. This would imply going over all users in $event_avatars[deleted_event]$ and deleting them from $avatar_events$ ($O(log(N)$)) as well as $avatar_event_roles$ ($O(1)$). This results in $O(Nlog(N))$.
+The operations shown above have quite reasonable time complexity boundaries: Redis guarantees at least linear time in almost all operations, and most hash-related operations are logarithmic. \textit{Set} and \textit{get} of single values tend to be executed in constant time. A possible \textit{worst-case scenario} could be \textit{deleting an event} when all users are connected to all events. This would imply going over all users in \texttt{event\_avatars[deleted\_event]} and deleting them from \texttt{avatar\_events} (\textit{O(log(N)})) as well as \texttt{avatar\_event\_roles} (\textit{O(1)}). This results in \textit{O(Nlog(N))}.
 
 \subsubsection{Conclusion}
 
-Redis is a simple, fast and highly powerful key-value store. It is very versatile and can be used to solve a large set of problems. Its simplicity is, however, indicative of the role that it should occupy in an application stack. Its memory-oriented nature makes it ideal for caching and other use cases that require storing short-lived data (even though this data can be persisted) and the "key-value" philosophy that is behind it makes it hard to model complex relations using the simple data structures that are provided. There are sites successfully [using Redis as their primary DB][2], but the complexity of their DB schema cannot be compared to that of Indico's.
+Redis is a simple, fast and highly powerful key-value store. It is very versatile and can be used to solve a large set of problems. Its simplicity is, however, indicative of the role that it should occupy in an application stack. Its memory-oriented nature makes it ideal for caching and other use cases that require storing short-lived data (even though this data can be persisted) and the "key-value" philosophy that is behind it makes it hard to model complex relations using the simple data structures that are provided. There are sites successfully using Redis as their primary DB\footnote{\href{https://moot.it/blog/technology/redis-as-primary-datastore-wtf.html}{Redis as Primary Data Store}}, but the complexity of their DB schema cannot be compared to that of Indico's.
 
 It is, then, clear that Redis would be a viable option in a "double database" scenario (primary DB using a different technology), in which it would act as a cache or possible primary storage for "simple" information that could be easily decoupled from the applications' business logic. Examples of that are:
 
@@ -261,7 +231,7 @@ It is, then, clear that Redis would be a viable option in a "double database" sc
 
 \subsection{OrientDB}
 
-\begin{lstlisting}[language=SQL]
+\begin{lstlisting}[language=SQL, caption=Dashboard Schema in OrientDB]
   (V, E) -> (Vertex, Edge)
   $ create class User extends V
   $ create class Event extends V
@@ -282,7 +252,9 @@ It is, then, clear that Redis would be a viable option in a "double database" sc
     set roles = ['attendee']
 \end{lstlisting}
 
-\begin{lstlisting}[language=HTML]
+\texttt{user} and \texttt{event} classes are vertexes and \texttt{role} class makes the edges of graph. \vspace{1cm}
+
+\begin{lstlisting}[language=HTML, caption=Example Dashboard Data in OrientDB]
   Class 'User':
     [
       {
@@ -346,24 +318,6 @@ It is, then, clear that Redis would be a viable option in a "double database" sc
 
 \subsubsection*{Conclusion}
 
-OrientDB is a multi-disciplinary graph database but is it really ready for production?
+OrientDB stores direct physical links to neighbours so when a record is retrieved, accessing its neighbours is \textit{O(1)} time. Therefore, all operations are guaranteed to complete in \textit{O(NlogN)} such that one vertex can be found in \textit{O(logN)} if proper index applied on the searched property and then, if this vertex has a relationship with every other vertex (such as a user has a role in every event), updating N vertexes will take \textit{O(N)}.
 
-Pros:
-
-Multi-disciplines; document, graph and key-value
-Flexible schema
-Fast (index, cache)
-ACID
-Security
-Customizable
-Interface (SQL and studio)
-Getting traction
-Cons:
-
-Slow development
-Buggy
-Small community
-No big successful production
-Java and drivers
-Competitors; Neo4j and Titan
-Lack of speed comparison to other databases from different disciplines
+In small scale, as seen here, OrientDB performs well in any query but the number of vertexes and edges can easily go out of limits of one machine at the scale of Indico. When this project was started, OrientDB had even no replication feature, which is implemented (experimentally) in version 1.6 (December 2013). Therefore, until development of planned master-less replication and auto-sharding are complete (2.0), OrientDB is far from production scale.

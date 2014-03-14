@@ -41,7 +41,7 @@ It is much more than a simple database product. This may be seen as an advantage
 
 If we were starting a web project now, WakandaDB seems a promising option with tooling and feature of totally embracing web. However, it is a bit dangerous even that situation since it's too early to play on WakandaDB as seen from lack of success stories and big deployments.
 
-\begin{table}[h]
+\begin{table}[H]
   \centering
   \caption{WakandaDB Object-Oriented Database}
   \renewcommand{\arraystretch}{1.5}
@@ -126,7 +126,7 @@ It has been around since late 90s, so it is reasonable to call \textsc{ZODB} as 
 
 One interesting drawback of \textsc{ZODB} being very tightly coupled with the code base is that each object is stored using its full class name on disk. That prevents moving classes around without a migration step. \textit{MaKaC}, Make a Conference, was the name that was chosen for Indico in its early development stages. As a result, source code still contains a lot of classes under \texttt{MaKaC} package or prefixed by \texttt{MaKaC}. They should be moved into \texttt{indico} package. The migration to a new back-end will hopefully help remove most (if not all) of these references.
 
-\begin{table}[!ht]
+\begin{table}[H]
   \centering
   \caption{ZODB Object-Oriented Database}
   \renewcommand{\arraystretch}{1.5}
@@ -163,7 +163,7 @@ Relational databases are some of the most battle-tested products of the last 20 
 
 Some general properties are provided here but an explanation of in-depth features will be given later since PostgreSQL was the winner of our survey.
 
-\begin{table}[!ht]
+\begin{table}[H]
   \centering
   \caption{PostgreSQL Relational Database}
   \renewcommand{\arraystretch}{1.5}
@@ -216,7 +216,7 @@ There is a subtle detail in this comparison. PostgreSQL is an integrated databas
 
 In short, MySQL is a very successful relational database that has a flexible design and is targeting performance at the expense of a full standard compliance and additional features. Its acquisition by Oracle in 2010 introduced, however, uncertainty regarding its long term future.
 
-\begin{table}[!ht]
+\begin{table}[H]
   \centering
   \caption{MySQL Relational Database}
   \renewcommand{\arraystretch}{1.5}
@@ -257,7 +257,7 @@ Writes lock this file which means writes are executed sequentially, but reads do
 
 It's a self-contained, server-less\footnote{no daemon for waiting client connections}, zero-configuration relational database which makes it a universal solution for small needs. But it's not capable of serving high load in production. Since it's easy to use, it is used by many high caliber products such as Android and Firefox. In the context of Indico, it makes perfect sense for testing. However, many features provided by PostgreSQL and MySQL are missing in SQLite so, while keeping MySQL or PostgreSQL as main data back-end, using SQLite even for tests brings additional complexity in what contains back-end dependent operation such as date and time handling.
 
-\begin{table}[!ht]
+\begin{table}[H]
   \centering
   \caption{SQLite Relational Database}
   \renewcommand{\arraystretch}{1.5}
@@ -318,7 +318,7 @@ The structure of tables is pre-defined like relational databases but unlike RDBM
 
 In RDBMS, full normalization is recommended in order to prevent update anomalies. In Cassandra, there are higher level abstractions to store 1 to many relations in a column; namely, set, list and map. Cassandra doesn't support joins and sub-queries, except Hadoop tasks (Pig and Hive are also supported), so de-normalization is encouraged by using these higher level constructs.
 
-\begin{table}[!ht]
+\begin{table}[H]
   \centering
   \caption{Cassandra Column-Oriented Database}
   \renewcommand{\arraystretch}{1.5}
@@ -368,7 +368,7 @@ Google has its own version, BigTable and it was very successful as a universal b
 
 HBase doesn't support transactions but atomic operations are supported at the row level. ACID-like guarantees provided by relational databases are achievable via de-normalization. However, nesting data requires at least superficial knowledge of access patterns. Otherwise, ad-hoc queries would be a necessary but they aren't possible due to lack of transactions. The transaction problem is solved in the design phase with well-planned row key and nesting data into one row.
 
-\begin{table}[!ht]
+\begin{table}[H]
   \centering
   \caption{HBase Column-Oriented Database}
   \renewcommand{\arraystretch}{1.5}
@@ -427,7 +427,7 @@ MongoDB is the most popular document-oriented database.
 It stores flexible JSON-style documents and provides a set of functionalities that is closer to that of RDBMS, namely a full-fledged query interface, full indexing support and in-place updates.
 The schema of a MongoDB is basically non-existent - there is the concept of \textit{collections} that can be compared to relational tables, but objects can have whatever fields and values the programmer sees fit. An object is not constrained in any way just because it belongs to a particular collection.
 
-\begin{table}[!ht]
+\begin{table}[H]
   \centering
   \caption{MongoDB Document-Oriented Database}
   \renewcommand{\arraystretch}{1.5}
@@ -448,7 +448,7 @@ The schema of a MongoDB is basically non-existent - there is the concept of \tex
     MongoDB doesn't have a schema at all and very flexible. As a result, using MongoDB is a pleasure and development with MongoDB takes less time for the same feature in RDBMS.
     \\ \hline
     Transactions Consistency &
-    MongoDB gives guarantee of BASE, eventual consistency and it doesn't support transactions which is a really bad disadvantage for Indico where there are multiple inter-relations between entities. Some parts of Indico nicely fit into a document but putting everything into a document is difficult in terms of design complexity and size constraint. Then, inter-relations discourage MongoDB as main storage.
+    MongoDB gives guarantee of BASE\cite{base}, eventual consistency\cite{eventually} and it doesn't support transactions which is a really bad disadvantage for Indico where there are multiple inter-relations between entities. Some parts of Indico nicely fit into a document but putting everything into a document is difficult in terms of design complexity and size constraint. Then, inter-relations discourage MongoDB as main storage.
     \\ \hline
     Community Momentum &
     Without any doubt, MongoDB is the most popular NoSQL database in the wild and it is very well documented.
@@ -488,7 +488,7 @@ However, if data structure is hardly changing, data is accumulating and versions
 
 CouchDB is in production at Credit Suisse, dotCloud and Engine Yard but there are also some failure stories such as Ubuntu One.
 
-\begin{table}[!ht]
+\begin{table}[H]
   \centering
   \caption{CouchDB Document-Oriented Database}
   \renewcommand{\arraystretch}{1.5}
@@ -543,7 +543,7 @@ Products are very different in terms of consistency characteristics, key structu
 
 Redis is a very simple key-value storage solution. It can be compared to memcached on steroids - a key-value store with extra [data structures] and additional features such as transactions and PubSub. Contrarily to e.g. memcached, it also allows developers to user server-side Lua scripts, akin to stored procedures. Redis will by default keep its data only in memory, but data can also be persisted on disk if desired. Redis Cluster is recently released to bring important features such as replication and strong consistency.
 
-\begin{table}[!ht]
+\begin{table}[H]
   \centering
   \caption{Redis Key-Value Store}
   \renewcommand{\arraystretch}{1.5}
@@ -602,7 +602,7 @@ Like HBase, Riak support inter-cluster replication but Riak has a master where H
 
 Riak is the choice of the majority of first 100 traffic websites such as GitHub (URL shortener and pages) and Google via acquisitions.
 
-\begin{table}[!ht]
+\begin{table}[H]
   \centering
   \caption{Riak Key-Value Store}
   \renewcommand{\arraystretch}{1.5}% Spread rows out...
@@ -624,7 +624,7 @@ Riak is the choice of the majority of first 100 traffic websites such as GitHub 
     Moreover, lack of proper transactions like in relational databases puts burden on readers.
     \\ \hline
     Transactions Consistency &
-    Riak implements vector clocks and reads use them to decide which write is the latest under concurrent updates so reads require extra work but writes always succeed.
+    Riak implements vector clocks\cite{clocks} and reads use them to decide which write is the latest under concurrent updates so reads require extra work but writes always succeed.
     \\ \hline
     Community Momentum &
     Riak is in production at very popular websites due to its highly fault-tolerant nature which is vital for a business takes huge traffic, a result of being big. \\ \hline
@@ -642,7 +642,7 @@ Graph databases try to optimize retrieval of these relations.
 
 Graph databases are composed of two main parts; underlying storage and processing engine:
 
-\begin{table}[!ht]
+\begin{table}[H]
   \centering
   \caption{Architecture of Graph Databases}
   \renewcommand{\arraystretch}{1.5}
@@ -807,7 +807,7 @@ There is also an emailing module which may be used for emergency, statistics, et
 
 There are a lot of graph databases but there are a few in active development; namely, DEX, Neo4j and Titan. DEX is out of comparison since it is commercial. Neo4j is the leader. Titan is quite new but could catch up with others. Titan goes pretty good with other systems such as Cassandra, HBase, ElasticSearch, etc. which is very important in big data era, to be able to deploy a polyglot storage system. Moreover, it is getting popular faster than OrientDB by providing better scalability with underlying storage engine.
 
-\begin{table}[!ht]
+\begin{table}[H]
   \centering
   \caption{OrientDB Graph Database}
   \renewcommand{\arraystretch}{1.5}
@@ -850,7 +850,7 @@ Neo4j adapts dual license, community and enterprise. There are huge differences 
 
 Both versions support ACID transactions and leverage Lucene for fast searching. OrientDB supports documents everywhere so as to vertexes and edges can theoretically be annotated as it's requested. Neo4j delegates it with integrating Lucene. Since OrientDB does itself, it is faster but being an important Apache project, Lucene has much much faster development.
 
-\begin{table}[!ht]
+\begin{table}[H]
   \centering
   \caption{Neo4j Graph Database}
   \renewcommand{\arraystretch}{1.5}
@@ -873,8 +873,8 @@ Both versions support ACID transactions and leverage Lucene for fast searching. 
     Neo4j is the most popular graph product but in general, graph databases are niche products and mainly used by communication companies, where connections between entities are deadly important to business.
     \\ \hline
     Cost \\ Exit Strategy &
-    Starting to use Neo4j isn't difficult due to 1-to-1 mapping from ZODB objects to vertexes and edges of Neo4j.
-    Graph databases supports \textit{Gremlin}, a graph traversing and manipulation language like SQL in relational world.
+    Starting to use Neo4j isn't that difficult by close 1-to-1 mapping from ZODB objects to vertexes and edges of Neo4j.
+    Graph databases support \textit{Gremlin}, a graph traversing and manipulation language like SQL in relational world.
     If Gremlin is used, Gremlin creates an abstraction layer on back-end storage like \textit{SQLAlchemy} does for relational databases so back-end can easily be changed with another Gremlin-compliant database such as OrientDB or Titan.
     \\ \hline
     Score & \rpt[4]{\FiveStar}\rpt[2]{\FiveStarOpen} \\
@@ -887,11 +887,11 @@ Both versions support ACID transactions and leverage Lucene for fast searching. 
 
 \vspace{-1.15cm} \hspace{3cm} \includegraphics[scale=0.2]{3/figures/titan.jpg}
 
-Titan is a graph database that targets scalability with supporting scalable NoSQL databases. Graphs are connected so dividing graph into multiple nodes is extremely difficult without data-aware solutions. Thus, main scalability idea is to replicate the graph into multiple nodes via master-slave or multi-master scheme but this prevents scaling beyond capabilities of weakest node. While in terms of query latency, this solution can provide reasonably good performance as Neo4j and OrientDB. While two unrelated points which are very far from each other are being updated, synchronization and locking are unnecessary. This is main problem Titan is trying to solve at the expense of losing ACID transactions. Moreover, scalability is more than throughput such that databases replicates whole graph in every node miserably fail scaling graphs in size. There are theoretical limits like 2 billion vertexes in Neo4j and OrientDB but these numbers can only be accessed in Titan practically.
+Titan is a graph database that targets scalability with supporting scalable NoSQL databases. Graphs are connected so dividing graph into multiple physical nodes is extremely difficult without data-aware solutions. Thus, main scalability idea is to replicate the graph into multiple nodes via master-slave or multi-master scheme but this prevents scaling beyond capabilities of weakest node. While in terms of read query latency, this solution can provide reasonably good performance as Neo4j and OrientDB. While two unrelated points which are very far from each other are being updated, synchronization and locking are unnecessary. This is main problem Titan is trying to solve at the expense of losing ACID transactions. Moreover, scalability is more than throughput such that databases replicates whole graph in every node miserably fail scaling graphs in size. There are theoretical limits like 2 billion vertexes in Neo4j and OrientDB but these numbers can only be accessed in Titan practically.
 
-In short, its architecture addresses an important problem which, in turn, draws attention of many users but it's still not widely used. Furthermore, the schema of Indico isn't mappable into a graph and while we are already trying to be away from column-oriented stores due to complexity, Titan even increases it.
+In short, its architecture addresses an important problem which, in turn, draws attention of many users but it's still not widely used. Furthermore, the schema of Indico isn't directly mappable into a graph and while we are already trying to be away from column-family stores due to complexity, Titan even increases it by using them as pluggable storage.
 
-\begin{table}[!ht]
+\begin{table}[H]
   \centering
   \caption{Titan Graph Database}
   \renewcommand{\arraystretch}{1.5}
@@ -924,4 +924,4 @@ In short, its architecture addresses an important problem which, in turn, draws 
 
 \subsection{Broadness and Validity of Survey}
 
-We try to give basic architecture details of each database but there are normally much more details to be considered. However, database ecosystem is quickly changing. We have seen multiple versions same database even while this writing. That's why we tried to keep more tiny details online in a living document. This enables us to easily update data and since it gives comparison more exposure, small mistakes are found and fixed earlier.
+We try to give basic architecture details of each database but there are normally much more details to be considered. However, database ecosystem is quickly changing. We have seen multiple versions of same database even throughout this writing. That's why we tried to keep more tiny details online in a living document\footnote{\url{http://ferhatelmas.com/db-survey}}. This enables us to easily update data and since it gives comparison more exposure, small mistakes are found and fixed earlier.

@@ -6,14 +6,14 @@ Indico (Integrated Digital Conferencing) is a web application for event manageme
 
 \par Indico events are divided into 3 types: lecture, meeting and conference as from simplest to the most complex, respectively. Lectures are one time talks while conferences provide a wider range of features.
 
-\par In addition to events having a type, each event belongs to a specific category, which enables category-driven navigation between events. However, active categories can contain many events in which finding events may be cusbersome so time-driven (day/week/month) view is combined with category view for a more powerful navigation. Sometimes time-driven navigation isn't enough, as any user, extensively uses Indico, can easily end up with tens of events in a daily view. To remedy this problem, personal dashboard was developed in which upcoming events are shown in sorted order to the user. Moreover, users can mark some categories as their favorites and Indico recommends categories to users by analyzing this information and the event history of users.
+\par In addition to events having a type, each event belongs to a specific category, which enables category-driven navigation between events. However, active categories can contain many events in which finding events may be cumbersome so time-driven (day/week/month) view is combined with category view for a more powerful navigation. Sometimes time-driven navigation isn't enough, as any user, extensively uses Indico, can easily end up with tens of events in a daily view. To remedy this problem, personal dashboard was developed in which upcoming events are shown in sorted order to the user. Moreover, users can mark some categories as their favourites and Indico recommends categories to users by analysing this information and the event history of users.
 
 \par Indico has a huge number of features and some important ones:
 \begin{itemize}
   \item Customization of the event's website.
   \item Easily setting up access and modification rights: Every part of conference management requires different access rights. One contributor should be able to modify her contribution but she shouldn't be able to change others, for instance.
   \item A powerful fully customizable WYSIWYG registration form for events
-  \item Custom forms such as preparing a survey to get feedback about event.
+  \item Custom forms such as preparing a survey to get feedback about event
   \item Call for abstracts
   \item Paper reviewing
   \item Rich text editing in Latex and Markdown
@@ -63,5 +63,5 @@ As seen, Indico is absorbing new feature sets by integrating with other services
 
 \par In the following chapter, we will provide an exhaustive description of the work done from the study of limitations of ZODB to a new implementation using a new polyglot database system. Moreover, database change involves refactoring a huge body of code base so this project also aims to pay years of technical debt and to complete what we wish we had had in the beginning, such as a fully modular Indico. In conclusion section, how important steps are taken to modernise Indico code base and to prepare transition of Indico to Python 3 can be seen in addition to getting scalable by new back-end.
 
-\par Even if important steps are accomplished, that's not enough because software is very volatile and requirements and technologies are quickly changing. While keeping basic principles like DRY and KISS, extending data system for specific cases will help with better scalability and facilitate the development of certain functionality such as statistics and social features.
+\par Even if important steps are accomplished, that's not enough because software is very volatile and requirements and technologies are quickly changing. While keeping basic principles like DRY\footnote{\href{http://en.wikipedia.org/wiki/Don't_repeat_yourself}{Don't Repeat Yourself}} and KISS\footnote{\href{http://en.wikipedia.org/wiki/KISS_principle}{Kepp it simple, stupid}}, extending data system for specific cases will help with better scalability and facilitate the development of certain functionality such as statistics and social features.
 

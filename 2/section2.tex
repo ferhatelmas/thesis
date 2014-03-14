@@ -14,11 +14,11 @@
 
 \section{The Decade of ZODB} 
 
-\par In 10 years of \textsc{ZODB} usage, a single serious incident due to a database problem was reported. It caused a service interruption of around one day, the only one to report in a decade, and absolutely no data loss. Many other minor incidents have happened, but never related to the DB itself or the technology behind it. In addition to that, there are no examples of data corruption to talk about. This said, it is not unfair to say that \textsc{ZODB} is a reliable product, a solid storage solution that can be trusted upon.
+\par In 10 years of \textsc{ZODB} usage, a single serious incident due to a database problem was reported. It caused a service interruption of around one day, the only one to report in a decade, and absolutely no data loss. Many other minor incidents have happened, but never related to the database itself or the technology behind it. In addition to that, there are no examples of data corruption to talk about. This said, it is not unfair to say that \textsc{ZODB} is a reliable product, a solid storage solution that can be trusted upon.
 
 \textsc{ZODB} can be shortly described as a \textit{glorified pickle store}. This is both its strength and its weakness: it is intrinsically bound to Python and its Object-oriented subsystem. This provides a great degree of transparency and the expressiveness of an Object-oriented approach, but sacrifices, first of all, portability and, additionally (but also of great importance), the performance of some operations.
 
-As an example, let's take a very simple DB operation that is usually taken for granted in the relational world: getting the list of names of all registrants in a conference:
+As an example, let's take a very simple database operation that is usually taken for granted in the relational world: getting the list of names of all registrants in a conference:
 
 \begin{lstlisting}[language=SQL]
   SELECT last_name, first_name
@@ -29,12 +29,12 @@ As an example, let's take a very simple DB operation that is usually taken for g
 This type of query can be performed in \textsc{ZODB}, but it will involve:
 
 \begin{itemize}
-  \item Querying the DB for all the objects relative to attendants of the conference in question. This involves:
+  \item Querying the database for all the objects relative to attendants of the conference in question. This involves:
 
   \begin{itemize}
     \item Retrieving the Conference object from the database
     \item Reconstructing the object from its serialized form (pickle)
-    \item Extracting the list of objects from the Conference object and requesting each one of them from the DB
+    \item Extracting the list of objects from the Conference object and requesting each one of them from the database
   \end{itemize}
   \item Reconstructing (unpickling) the objects client-side
   \item Retrieving the attributes in question from the reconstructed object.
@@ -82,7 +82,7 @@ As a result, while implementing indexes in \textsc{ZODB} is possible, these are 
 
 \subsection{An Example: The Dashboard}
  
-The User Dashboard was the first Indico module to be implemented on a storage mechanism that is not ZODB-based (Redis). While ZODB remains as the primary source of information for user-event relations, Indico is fetching this data directly from a Redis server, and updating it in parallel with Indico. Redis acts here as a \textit{write-through} cache, a secondary data store that is, however, always up-to-date.
+The User Dashboard was the first Indico module to be implemented on a storage mechanism that is not ZODB-based (Redis). While ZODB remains as the primary source of information for user-event relations, Indico is fetching this data directly from a Redis server, and updating it in parallel with \textsc{ZODB}. Redis acts here as a \textit{write-through} cache, a secondary data store that is, however, always up-to-date.
 
 There are reasons for this choice. They are mostly connected to the relation between the different entities in the problem.
 
@@ -134,7 +134,7 @@ Similar problems have already been solved in the past using the second approach.
   \begin{tabular}{| >{\centering\bfseries}m{2in} | >{\centering\arraybackslash}m{3.5in} |}
 	\hline	
 	\textbf{Limitation} & \textbf{Explanation} \\ \hline
-    Ad-hoc queries & Objects can't be queries by properties \\ \hline
+    Ad-hoc queries & Objects can't be queried by properties \\ \hline
     Indexing & Not automatic and left to application developer \\ \hline
     Caching on the Server Side & No cache on the server side, only operating system cache \\ \hline
     Replication & Mostly single-point of failure. \textsc{ZRS} provides master-slave replication. It was commercial but open-sourced. \\ \hline
@@ -151,11 +151,11 @@ It seems to be clear, from what was mentioned above, that \textsc{ZODB} is not a
 
 We have looked at \textsc{ZODB} limitations and here, we try to define criteria which will guide us to compare different databases.
 
-We have come up with 6 main categories and small deal breakers: Here is main categories:
+We have come up with 6 main categories:
 
 \begin{enumerate}
   \item \textit{Availability}: Replacement technology must be open source since Indico is an open source application and users shouldn't be forced to use a commercial solution. Moreover, the license used by the database in question should take into account future plans for the project (such as possible commercial services, etc.)
-  \item \textit{Scalability / Replication}: Scalability is the main driving factor for the replacement of \textsc{ZODB} so it is a must in the system due to the increasing usage and popularity of Indico. Te database should have room for extensibility for the foreseeable future.
+  \item \textit{Scalability / Replication}: Scalability is the main driving factor for the replacement of \textsc{ZODB} so it is a must in the system due to the increasing usage and popularity of Indico. The database should have room for extensibility for the foreseeable future.
   \item \textit{Easiness of Use / Development}: The chosen database should have good tool support for Python, main development language of Indico, and it should facilitate the time to implement new features so it should be transparent as much as possible like \textsc{ZODB}. The complexity of a feature should come from application logic itself, not the database.
   \item \textit{Transactions / Consistency}: Writes touch many entities at the same time due to dependencies between entities. Thus, possessing transaction capabilities is very important in a database , as a way to keep data consistent.
   \item \textit{Community / Momentum}: Indico aims to solve the conference management problem, not the nitty gritty use-case details of a specific database. When a problem is encountered, a respective solution should normally have been found before. Successful deployments of the products in other contexts are an important measure of this requirement.
