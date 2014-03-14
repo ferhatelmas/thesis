@@ -1,8 +1,8 @@
 \chapter{Decision}
 
-After surveying and trying databases in a small case, next logical step is to decide on one or poly-glot database system. We decided on running \textit{ZODB} with \textit{PostgreSQL} for main data storage. Since \textit{Redis} is very flexible and blazingly fast, it will be leveraged to offload some traffic from \textit{ZODB} and \textit{PostgreSQL}. This is the first phase of database change.
+After surveying and then trying out of some these databases at a small scale\cite{seven}, next logical step was to decide on using one (or a poly-glot) database system. We decided on running PostgreSQL for main data storage. However, transition will be incremental, so we will be using ZODB and PostgreSQL together for some time. Since \textit{Redis} is very flexible and blazingly fast, it will be leveraged to offload some traffic from \textit{ZODB} and \textit{PostgreSQL}. This is the first phase of a database change.
 
-Secondly, there is one more important goal to make Indico more user-friendly and it includes:
+Secondly, there is one more important goal, to make Indico more user-friendly and it includes:
 \begin{itemize}
   \item Making Indico installable with one command
   \begin{itemize}
@@ -18,33 +18,37 @@ Secondly, there is one more important goal to make Indico more user-friendly and
   \item Making Indico more user-centric and social.
 \end{itemize}
 
-We have decided to use a document-oriented database for statistics collection and caching of event meta-data that will aggregated from servers around the world. Inside of available document-oriented databases, we decided on \textit{MongoDB} since it's most accessible in terms of know-how, popularity and features. Indico has a mobile version which is read-only. Thus, it's reasonable to see it as a cache for \textit{ZODB}. Mobile version uses \textit{MongoDB} since there is no need for ACID guarantee, ad-hoc queries are supported and lack of schema enables faster development. Due to nice fit between use-case and provided features by MongoDB, Indico mobile has been very successful. Data manipulation flow of new planned use-cases are very similar to mobile version. That's why \textit{MongoDB} is the selected option.
+Different kinds of problems require different solutions, and other storage paradigms are being used within the Indico ecosystem. For instance, we have decided to use a document-oriented database for statistics collection and caching of event meta-data that will aggregated from servers around the world, which is called project \textit{indic8r}. Inside of available document-oriented databases, we decided on \textit{MongoDB} since it's the most accessible in terms of know-how, popularity and features. Indico has a mobile version which is read-only - thus, it's reasonable to see it as a cache for \textit{ZODB}. This mobile version uses \textit{MongoDB}, since there is no need for ACID, ad-hoc queries are supported and the lack of schema enables faster development. Due to such nice fit between use-case and features provided by MongoDB, Indico mobile has been very successful. The data manipulation flow of these new planned use-cases are very similar to that of mobile version. That's why \textit{MongoDB} is the selected option.
 
-Socialization of Indico requires graph processing in which graph databases excel but at the time of writing, there is no final decision. Current main focus is to change the de-facto back-end and it will take a great amount of effort. Until it's complete, graph databases will probably change a lot and no successful big deployments with graph databases except Neo4j and custom/proprietary solutions such as Facebook. Waiting until we have to give a decision seemed to be better in that situation.
+The introduction of social network-like features in Indico can be considered as an application of graph processing in which graph databases excel. But at the time of writing, there is a decision: we aren't using them, at least for now. The main focus right now is to change the de-facto back-end and it will take a great amount of effort. Until it's complete, graph databases will probably change a lot and there are no successful big deployments with graph databases except Neo4j and custom/proprietary solutions such as Facebook.
 
 \section{Chosen Database Type}
 
 We have first checked object-oriented databases because one good object-oriented database could reduce transition costs a lot by keeping same paradigm, enabling easy development and tight integration with Python. However, there is no good option in the market which will be able to replace \textit{ZODB}.
 
-Column-family databases aren't considered since they are just over complex in the scale of Indico.
+Column-family databases aren't considered since they are just too complex at Indico's scale.
 
-Key-value stores are overly simplistic. It's very difficult to convert Indico schema to key-value storage and keeping it manageable. References between entities or higher level collections are needed to easily store/retrieve relatedness of entities. However, they have specific cases where managing data is easy such as url and session caching. Since the less main database is used, the better it is; Key-value store, \textit{Redis}, is used and it'll be adapted wherever it makes sense but not for being main database.
+Key-value stores are overly simplistic. It's very difficult to convert Indico's schema to key-value storage and still keep it manageable. References between entities or higher level collections are needed to easily store/retrieve related data. However, there are specific cases where managing data is easy, such as url and session caching. Since the less the main database is used, the better it is; a key-value store, \textit{Redis}, is used and it'll be employed wherever it makes sense but purely as secondary storage.\footnote{\href{https://www.twilio.com/blog/2013/07/billing-incident-post-mortem-breakdown-analysis-and-root-cause.html}{Twilio Billing Incident in Redis back-end}}
 
-Graph databases meet the majority of needs of Indico such as ACID transactions, replication and mapping complex relationships. However, they are niche products lacking community and every entity of complex Indico schema isn't mappable because entities are usually like trees and putting these \textit{contains} relationship into graph database exponentially increases number of edges. Therefore, storing \textit{contains} relationship into document on vertexes and using edges for far separated entities is favourable. This design is extensively supported by \textit{OrientDB}. That's why \textit{OrientDB} is studied in details but as a result, we find it to be in a fast development phase and not production ready. 
+Graph databases meet the majority of needs of Indico, such as ACID transactions, replication and mapping complex relationships. However, they are niche products lacking community and not every entity of a complex Indico schema isn't mappable because entities are usually like trees and putting these \textit{contains} relationships into a graph database exponentially increases number of edges. Therefore, storing \textit{contains} relationship into documents on vertexes and using edges for far separated entities is favourable. This design is extensively supported by \textit{OrientDB}. That's why \textit{OrientDB} is studied in detail but as a result, we find it to be in a too extreme development phase and not production ready. 
 
-After exhausting other types, we had two options; namely, document-oriented and relational databases. This is basically a trade-off between ease-of-use (lack of strict schema and faster development) and ACID transactions. For specific cases, ACID transactions may be unnecessary because document-oriented databases are capable of supporting ACID guarantees in document level and what is multiple tables in fully normalized relational databases will be nested documents within one huge document in document-oriented databases such as room booking schema, which will be explained later as prototyping. However, when other parts started to huge documents, we can't work on document level any more, there is a need of cross references between tables.
+After exhausting any other types, we had two options; namely, document-oriented and relational databases. This is basically a trade-off between easiness-of-use (lack of strict schema and faster development) and ACID transactions. For specific cases, ACID transactions may be unnecessary because document-oriented databases are capable of supporting ACID guarantees at a document level and what are multiple tables in fully normalized relational databases will be nested documents within one huge document in document-oriented databases such as room booking schema, which will be explained later in the condition of prototype. However, when other parts start to have huge documents, we can't work on document level any more, there is a need for cross references between tables.
 
-As a result, we are left with relational databases and relational databases are the best fit for Indico use-case and schema because
+As a result, we are left with relational databases and relational databases are the best fit for Indico's use-case and schema because:
 
 \begin{itemize}
   \item Schema is composed of many cross-referenced entities which requires ACID
-  \item The size of data is very manageable by relational databases
+  \item The size of the data set is perfectly manageable by relational databases
   \item Indico provides many flexible search interfaces which execute ad-hoc queries 
 \end{itemize}
 
 \section{Chosen Database}
 
-Since we are looking for a relational database, we would take the lead of the \textit{MySQL} cloud or \textit{PostgreSQL}. The future of \textit{MySQL} cloud is confusing while \textit{PostgreSQL} is gaining popularity steadily and a much more tightly-connected community is coming life around it. In addition to these accessibility issues, getting \textit{PostgreSQL} boxes at CERN is easier via a service provided by database team at CERN \footnote{http://www.cern.ch}. Choosing \textit{MySQL} means diverging from other services at CERN which puts maintenance burden on the Indico team. We're already paying technical debt of choosing \textit{ZODB}. Moreover, \textit{ZODB} even needs little administration by being a Python library, except automated scripts such as daily packer, compared to \textit{MySQL} which is outside of Python world. Finally, \textit{PostgreSQL} has powerful features:
+Since we were looking for a relational database, \textit{MySQL} cloud or \textit{PostgreSQL} were obvious candidates. The future of \textit{MySQL} is confusing, while \textit{PostgreSQL} is gaining popularity steadily and a much more tightly-connected community is coming to life around it. In addition to these community issues, getting \textit{PostgreSQL} boxes at CERN is possible via a service provided by database team\footnote{\href{http://information-technology.web.cern.ch/services/database-on-demand}{Database on Demand Service}}. The burden of managing a database system will be reduced, even though management of ZODB was not too hard: most operations (like packing and backup) were done by automatic scripts.
+
+PostgreSQL has many more features than MySQL, which makes it closer to document-oriented databases. Between features and speed, we have chosen features because we didn't experience notable speed difference between them and PostgreSQL has been getting faster steadily.
+
+Finally, notable features of \textit{PostgreSQL} (not an exhaustive list, of course):
 
 \begin{itemize}
   \item Most compliant DBMS with standards
@@ -105,14 +109,14 @@ Since we are looking for a relational database, we would take the lead of the \t
     \item Amazon
     \item Apple
     \item Disqus
-    \item Facebook via Instagram
+    \item Facebook (Instagram)
     \item Heroku
-    \item Microsoft via Skype
+    \item Microsoft (Skype)
     \item Nasa
     \item Yahoo
   \end{itemize}
 \end{itemize}
 
-In the light of that study, \textit{PostgreSQL} is chosen to replace \textit{ZODB}.
-
-One final remark is that \textit{PostgreSQL} was an ugly academic project in early 2000s but today, \textit{PostgreSQL} is undergoing a renaissance in features have attracted many small businesses and enterprises. Thus, knowing how to use \textit{PostgreSQL} has become an important skill set and a valuable career path. Having a open source \textit{PostgreSQL} product may have propelled the contributions.
+In the light of that study, \textit{PostgreSQL} was chosen to replace \textit{ZODB}.
+\\
+One final remark is that \textit{PostgreSQL} went from being "an ugly academic project"\cite{postgres} in early 2000s to a complete renaissance in terms of features, which have attracted many small businesses and enterprises. Thus, knowing how to use \textit{PostgreSQL} has become an important skill and a valuable asset in a career path. The fact that Indico is an open source product with PostgreSQL may have contributed to the increase of outside contributions.
