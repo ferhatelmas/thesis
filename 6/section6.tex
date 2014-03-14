@@ -1,54 +1,64 @@
 \chapter{Implementation}
 
-In this chapter, we share our experience of how implementation is planned and being done.
+In this chapter, we explain the implementation plan and the work that has been done so far.
 
 \section{Big Picture}
 
-Indico has a complex product with many features. As a result, Indico is a big code base which is easily seen table \ref{loc_comparison} in comparison to some popular services.
+Indico is a complex product with many features. As a result, it as a large code base which is easily seen figure \ref{loccomp}\footnote{\href{https://www.ohloh.net/p/reddit}{Reddit on Ohloh}, \href{http://www.youtube.com/watch?v=MLM2acV\_1yo}{Yelp: Developing a Python service stack at Twitter University}, \href{https://www.ohloh.net/p/indico}{Indico on Ohloh}} in comparison to some popular services.
 
-Due to complexity, it isn't possible to change database instantly. Since we would like to see the result of our changes all the time, we need a working system. Therefore, main database machinery, firstly, is integrated and then each modules is refactored into using new database. At the same time, tests are being written to validate the behaviour of code. After one module is ready, it will be pushed into production to be tested there, too while other modules are being refactored.
+\begin{figure}[H]
+  \caption{Line of code comparison between Reddit, Yelp and Indico}
+  \centering
+    \includegraphics[scale=0.8]{6/figures/loccomp.png}
+  \label{loccomp}
+\end{figure}
 
-
+This kind of complexity makes a database change a non-trivial operation that has to be done in step. Since we would like to see the result of our changes all the time, we need a working system. Therefore, the main database machinery, is first integrated and then each module is refactored into using the new database. At the same time, tests are being written to validate the behaviour of code. When a module is ready, after  careful testing, it is put in production. Other modules follow, being gradually refactored and moved to the production environment.
 
 \section{Scope of Project}
 
-When ZODB started to perform badly, incremental optimizations were done. For instance, Room Booking - enables location and room management, and reserving rooms for events, is one of the most complex and involving modules and it's separated into its own database. Since it's not very tightly integrated into main database, it is the first module as a good starting point to get experience in refactoring, frameworks, tool chain and interpolate complexity.
+When ZODB started to perform badly, incremental optimizations were done. For instance, Room Booking which enables location and room management, and reserving rooms for events, is one of the most complex and involving modules and has its own database (in CERN's production system). Since it's not very tightly integrated into the main database, it is a good starting point that allows the development team to gain experience in the frameworks and tools in question as well as in refactoring code to the new database. It also allows for more precise estimates to be established.
 
 \section{Room Booking Schema}
 
-Since we are going to use a RDBMS, schema must be designed up-front.
+Since we are going to use a RDBMS, a schema must be designed up-front.
 
-We started to inspect database with external tools to get the object structure. However, ZODB is an object database, inspection database without their mapped run-time classes is much more difficult to relational databases. Even if there are 3 available tools , non of them is stable and well-supported:
+We started inspecting database with external tools to get the object structure. However, ZODB being an object database, inspecting it is much harder, not only because the inspection tool needs run-time information about used classes but also because data is organized in a graph-like fashion. Even if three different tools are available for such job, none of them has shown to be stable and well-supported:
 \begin{itemize}
-  \item zodbbrowser
-  \item eye
-  \item z3c.zodbbrowser (unfinished GSOC project)
+  \item \texttt{zodbbrowser}
+  \item \texttt{eye}
+  \item \texttt{z3c.zodbbrowser} (unfinished GSOC\footnote{\href{http://www.google-melange.com/gsoc/homepage/google/gsoc2014}{Google Summer of Code}} project)
 \end{itemize}
 
-We have tried all of them but \textit{eye} was the most stable to our experience but even \textit{eye} couldn't open our production database which is around 30 GB after one day of interaction, get biggers with every update to objects since storage mechanism of ZODB is to save every version of objects and only to put a reference to the latest version.
+We have tried all of them but \textit{eye} was the most stable in our opinion and our experience. But even \textit{eye} wouldn't open our production database, which can be as big as 40 GB. Even a packed version won't be smaller than 15 GB.
 
-Viewer may be patched but responses with developer of module back and forth were slow and since we don't want to lose time with it, we worked with only empty database at first. We loaded data incrementally by testing to find the tipping point where it fails. Next logical step is to analyse the mapped classes which isn't an easy task because we are talking about classes composed of $\sim$2000 lines.
+The viewer could be patched, but the interaction with upstream developer showed to be slow. Te choice was, then, to use a subset of this database instead - data was loaded incrementally in order to find the rupture point. Next logical step was to analyse the mapped classes which wasn't an easy task, since some of the classes were as big as $\sim$2000 lines.
 
-\hspace{-0.65cm}\includegraphics[scale=0.63]{6/figures/schema.png}
+\begin{figure}[H]
+  \caption{Room Booking Schema with CERN production data}
+  \centering
+    \includegraphics[scale=0.63]{6/figures/schema.png}
+  \label{schema}
+\end{figure}
 
-It's a bit challenge because classes in ZODB uses \textit{set}, \textit{list}, \textit{dictionary} data structures of Python and there are places where data is replicated within objects. They should be fully normalized into their own tables.
+Normalizing such a data set is a challenge, because most of the ZODB classes in question use the \textit{set}, \textit{list}, \textit{dictionary} data structures of Python and there are places where data is replicated within objects. They should be fully normalized into their own tables.
 
 There are places which work nicely in small number of cases but don't scale:
 \begin{itemize}
-  \item Repetition enumeration for reservations: currently, there are only 6 options so their text representations and dates are calculated explicitly. Moreover, their implementation doesn't do what their description says. Adding one more repetition type isn't easy so their text and date generation must be humanized and automated.
+  \item Recurrence of room bookings: currently, there are only 6 options so their text representations and dates are calculated explicitly. Moreover, their implementation is not always precise. Some corner cases result in results that are not intuitive at all. Adding one more repetition type isn't easy so text and date generation needs some \textit{humanization} and a better computing algorithm.
   \item Location and Room attributes and equipments: These are replicated for each one, they all mean the same thing, though.
-  \item Location and Room attributes and equipments: They have a hierarchy but this hierarchy is hard coded into source code. Each level of hierarchy is one list in room object, for instance.
-  \item Location and Room attributes and equipments: Due to replication, there are inconsistencies. Room can't have an equipment which its location doesn't have but since there is no check, it's possible.
-  \item Reservation repetitions are materialized. Reservation objects keep track of start and end date with repetition type. Whenever reservation request has come, these repetitions are generated in client and they're checked for overlap with the requested time span.
+  \item Location and Room attributes and equipments: They have a hierarchy but this hierarchy is hard coded into the source code. Each level of this hierarchy is one list in room object, for instance.
+  \item Location and Room attributes and equipments: Due to replication, there are inconsistencies. Rooms shouldn't be able to possess an equipment type that their corresponding location doesn't allow. However, ZODB's lack of schema or any other constraints makes it hard to enforce that.
+  \item Booking occurrences are calculated on-the-fly. Booking objects keep track of the start and end data of the reservation as a whole, but the actual occurrences (in the case of recurring bookings) are generated in runtime, as are collisions checked.
 \end{itemize}
 
-In addition to refactoring to use new database, these problems are also addressed with new schema.
+The opportunity to re-design the DB schema brought the added benefit of being able to address these issues.
 
-Finally, some helper scripts are implemented to easily generate a graph of schema and \textit{UML} diagram of classes. Understanding what is what from code inspection as a start may be time wasting. Hopefully, these scripts will same some time later by providing a high level of system. Actually, analysis of ZODB comes from lack of tools. In RDBMS, especially PostgreSQL, pgAdmin makes this kind of inspection much easier.
+Finally, some helper scripts were implemented in order to easily generate a graph of the schema and a \textit{UML} diagram of classes. Understanding what is what from code inspection as a start may be a waste of time. Hopefully, these scripts will save some time in development, as they provide a high level view of the system that can be very useful. Fortunately, not all DB system suffer from the same issue as ZODB in terms of lack of tools: PostgreSQL, for instance, has pgAdmin, a powerful inspection tool.
 
 \section{ORM - Object Relational Mapper}
 
-We are dealing with objects and RDBMS is waiting pure serialized binary data. This may be solved by ourselves but there are stable object relational mapper libraries for Python:
+A common problem that affects many modern web applications is that object orientation is not always easy to couple with relational models. An RDBMS is expecting tabular data. While a custom solution could be possible, fortunately there are libraries that provide this functionality out of the box:
 \begin{itemize}
   \item SQLALchemy
   \item Django ORM
@@ -57,49 +67,52 @@ We are dealing with objects and RDBMS is waiting pure serialized binary data. Th
   \item Storm
 \end{itemize}
 
-We have chosen SQLAlchemy. Django ORM would be a ridiculous idea without Django web framework. Storm is developed at Canonical and has shown capabilities in Launchpad scale but other than that, there aren't many . pony and peewee have a smaller user community and less features compared to SQLAlchemy.
+We have chosen SQLAlchemy. Django ORM would be an option, but it would be more appropriate if Indico used the Django web framework. Storm is developed at Canonical and has shown capabilities at the scale of Launchpad but other than that, there aren't many products. pony and peewee have a smaller user community and less features compared to SQLAlchemy.
 
 SQLAlchemy is a very stable library approaching its $1.0$ major version and preferred by Mozilla, Nasa, OpenStack. Some of its nice features are:
 \begin{itemize}
-  \item Architecture: SQLAlchemy is composed of two layers, core and orm. Orm layer makes easier to play with objects but more fine-grained control is tuned by core layer.
+  \item Architecture: SQLAlchemy is composed of two layers, core and orm. ORM layer makes it easier to play with objects but more fine-grained control is tuned by the core layer.
   \item Declarative DDL, Data Definition Language.
-  \item Unit of work: SQLAlchemy prevents excessive talking to database, instead everything is put into queues and batched in one go.
+  \item Unit of work: SQLAlchemy prevents excessive communication with the database, instead everything is put into queues and batched in one go.
   \item Powerful query generation: SQL construction from Python functions and expressions.
-  \item Modular and extensible: Custom types, custom compile of queries.
+  \item Modular and extensible: Custom types, custom compilation of queries.
   \item Eager/Lazy loading and caching
 \end{itemize}
 
-Morever, Flask, micro-web framework, recently is integrated into Indico. Before Flask, Indico has a custom request handle and dispatch mechanism. Even if it's done by Flask now, Flask isn't fully utilized. We added Flask-SQLAlchemy to our arsenal with SQLAlchemy to more tight integration of Flask into Indico.
+Recently, the Flask web micro-framework was integrated into Indico. Before that, Indico had its own WSGI-compatible request handling and dispatching mechanism. Flask is now doing that job behind the scenes (even if there are some features in Flask that Indico is not yet using at their full extent). Flask-SQLAlchemy was chosen to provide tighter integration between Flask and SQLAlchemy.
 
 \section{MVC - Model View Controller}
 
-Indico isn't as modular as it should be. Every function related to one layer is put into the same file. For example, in Room Booking module, each request handler is in the same file so this file is huge, $\sim$15000 lines. Navigating, understanding and editing it is difficult. Even text editor may sometimes freeze while editing such a big file.
+Many parts of Indico are not as modular as they should be. Every function related to one layer is put into the same file. Even though a lot of work is being done in order to improve that, some older files still have as much as $\sim$15000 lines. Navigating, understanding and editing it are difficult. Even text editor may sometimes freeze while editing such a big file.
 
-Since we're refactoring, why don't we make our lives easier for the future? MVC, model-view-controller, pattern is a well-known software pattern to divide applications into interconnected parts. MVC enables separation between how data is represented within system, how requests are handled and how data is shown to users.
+Since we're refactoring, why don't we make our lives easier for the future? MVC (Model-View-Controller) pattern is a well-known software pattern that splits applications into interconnected parts. MVC enables separation between how data is represented within the system, how requests are handled and how data is shown to users.
 
-We are adapting MVC pattern as refactoring for new database so as to have manageable pieces.
+Adapting the MVC pattern extensively in the new database-enabled code, in order to create  better and manageable software modules.
 
 \section{Models}
 
 We use SQLAlchemy and Flask-SQLAlchemy and their declarative DDL. 
 
-Firstly, one SQLAlchemy object for database interface is put into \textit{indico.core.db}. This object makes table and type primitives available.
+Firstly, a base SQLAlchemy object that provides an interface with the database is put into \texttt{indico.core.db}. This object makes table and type primitives available.
 
-Secondly, each model is put into its own file. After importing \textit{db} object, each class member is set to  a column object with specific type from \textit{db} object.
+Secondly, Models, which represent business objects, are put into their own separate files. Each class attribute is set to a column object of a specific type which is retrieved from the base \textit{DB} object.
 
-At runtime, after Flask application is created, \textit{db} object is imported and configured. Flask-SQLAlchemy comes with reasonable defaults. However, \textit{db} is configured with values retrieved from main Indico config object which contains Flask-SQLAlchemy defaults at default.
 
-After getting an application context from flask application and setting application of \textit{db} object to this application, each model that is using SQLAlchemy should  be imported to resolve interdependence between models. At this time, we can drop existing database and/or create database. Models are ready to use.
+At runtime, after the Flask application is created, the \textit{DB} object is imported and configured. Flask-SQLAlchemy comes with reasonable defaults. However, \textit{DB} is configured with values retrieved from the main Indico \textit{config} object, which itself contains Indico's default set of parameters for SQLAlchemy.
+
+After getting an application context from the flask application and setting application of \textit{DB} object to this application, each model that is using SQLAlchemy should  be imported to resolve interdependence between models. At this time, we can drop existing database and/or create database. Models are ready to use.
 
 \section{Distributed Queries}
 
-ZODB isn't dropped at one night so RDBMS and ZODB should coexist until complete transition is done. Therefore, distributed queries must be supported. If one of databases gives error, transaction must be aborted and state must be roll-backed to previous status.
+ZODB can't be replaced from day to night so the chosen RDBMS and ZODB will have to coexist until full transition is achieved. Therefore, distributed queries must be supported. If one of databases returns an error, the transaction must be aborted and the connection state must be rolled back.
 
-We may develop this functionality ourselves but luckily, SQLAlchemy provides extensibility for \textit{session} object which is the interface to the \textit{db} object and local cache. Therefore, adding /removing objects to/from \textit{session} may be done by application developer while commit/roll-back is called by extension. Moreover, ZODB transaction module can manage external transactions in addition to its own ZODB transaction with a helper that provides a common ZODB interface. Architectures of these libraries is nicely fits into structured Indico request handler hierarchy. Every request handler extends \textit{base} request handler which is the only point where transactions are committed or roll-backed.
+Once again, this problem could be solved with a "homemade" implementation, but, luckily, SQLAlchemy's \textit{session} object, ongoing transaction and local cache, is extensible enough to allow better than that. Therefore, adding /removing objects to/from the  \textit{session} may be done by the application developer while commit/roll-back is called by an extension. Moreover, ZODB's transaction module can manage external transactions in addition to its own ZODB transaction with a helper that provides a common ZODB interface. The architectures of these libraries nicely fit into Indico's own structured request handler hierarchy. Every request handler extends the \textit{base} request handler which is the only point where transactions are committed or rolled back.
 
-To make this design possible, we use \textit{zope.sqlalchemy} which is a joint effort of ZODB and SQLAlchemy developers. Making \textit{base} request handler only responsible, developers aren't needed to deal with transaction logic any where else, they only manipulate objects, instead and \textit{base} request handler handles the rest because when a request has come, one thread-local \textit{session} is created and one transaction is started. Developer uses this \textit{session} to implement application logic and at the end, \textit{base} request handler checks session for changes. If there are changes, they have been tried to be committed  . If everything goes well, results are show, otherwise transaction is roll-backed and appropriate error message is displayed. Finally, transaction is finalized and  thread-local \textit{session} is closed which means request has ended.
+To make this design possible, we use \textit{zope.sqlalchemy} which is a joint effort of ZODB and SQLAlchemy developers. Since only the base request handler in Indico deals with transaction logic, developers are not exposed to it.
 
-There is a subtle detail because \textit{db} object must be created with that \textit{zope.sqlalchemy} extension. However, we don't always need that extension such as migration scripts (ZODB $\rightarrow$ RDBMS) and unit tests. When it's used unless needed, it causes more troubles than benefits so dynamic loading of \textit{db} object is needed. Since \textit{db} object is the main building of database, it's in use literally everywhere. The only logical place to add this capability is \textit{indico.core.db}. It's implemented by malleability of Python. Caller modules set \textunderscore \textunderscore \textit{no}\textunderscore \textit{session}\textunderscore \textit{options}\textunderscore\textunderscore\textit{ }global to \textit{true}. While \textit{db} is being loaded, \textit{db} module checks that specific global in frames, call stack, of parent modules. If global is seen, then pure vanilla SQLAlchemy object is imported without any extension. Otherwise, it is loaded with ZODB transaction extension.
+Making \textit{base} request handler only responsible, developers aren't needed to deal with transaction logic any where else, they only manipulate objects, instead and \textit{base} request handler handles the rest because when a request has come, one thread-local \textit{session} is created and one transaction is started. Developer uses this \textit{session} to implement application logic and at the end, \textit{base} request handler checks session for changes. If there are changes, a commit is attempted. Otherwise the transaction is rolled back and an appropriate error message is displayed. Finally, the transaction is finalized and thread-local \textit{session} is closed which means the request has ended.
+
+There is a subtle "nuance" in all of this because \textit{db} object must be created using the \textit{zope.sqlalchemy} extension. However, this extension is not always needed: migration scripts (ZODB $\rightarrow$ RDBMS) and unit tests do not need it. When it's used with no need, it causes more troubles than benefits so this object has to be created dynamically. Since \textit{db} object is the main building of database layer, it's in use literally everywhere. The only logical place to add this capability is \texttt{indico.core.db}. With recourse to some Python magic, this can be done. Caller modules set \texttt{\_\_no\_session\_options\_\_} global to \textit{true}. While \textit{db} is being loaded, \textit{db} module checks that specific global in the call stack frames of parent modules. If global is seen, then pure vanilla SQLAlchemy object is imported without any extension. Otherwise, it is loaded with ZODB transaction extension.
 
 \section{Queries}
 
